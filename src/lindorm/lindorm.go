@@ -14,7 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"vita-svr-comm/localtime"
+
+	"github.com/VitaDynamics/vita-server-common/src/localtime"
 
 	"github.com/sirupsen/logrus"
 )
