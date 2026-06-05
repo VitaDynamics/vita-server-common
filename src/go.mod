@@ -1,4 +1,4 @@
-module github.com/VitaDynamics/vita-server-common
+module github.com/VitaDynamics/vita-server-common/src
 
 go 1.26.2
 
