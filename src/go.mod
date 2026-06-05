@@ -1,4 +1,4 @@
-module vita-svr-comm
+module github.com/VitaDynamics/vita-server-common
 
 go 1.26.2
 
