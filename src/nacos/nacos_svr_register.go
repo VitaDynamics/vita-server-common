@@ -1,0 +1,191 @@
+package nacos
+
+import (
+	"fmt"
+	"net"
+	"os"
+	"strings"
+
+	"github.com/nacos-group/nacos-sdk-go/v2/clients"
+	"github.com/nacos-group/nacos-sdk-go/v2/clients/naming_client"
+	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
+	"github.com/nacos-group/nacos-sdk-go/v2/vo"
+)
+
+const (
+	DefaultNacosGroup   = "DEFAULT_GROUP"
+	DefaultNacosCluster = "DEFAULT"
+)
+
+type RegisterServiceInstance struct {
+	ServiceName string
+	IP          string
+	Port        uint64
+	Metadata    map[string]string
+	GroupName   string
+	ClusterName string
+	Weight      float64
+	Enable      bool
+	Healthy     bool
+	Ephemeral   bool
+}
+
+type RegisterServicesParam struct {
+	NacosConf   *PkgNacosConfig
+	NamespaceID string
+	Instances   []RegisterServiceInstance
+}
+
+// RegisterServicesToNacos provides a generic registration capability for multiple instances.
+// It returns a cleanup function that deregisters all successfully registered instances.
+func RegisterServicesToNacos(param RegisterServicesParam) (func(), error) {
+	if err := validateNacosConfig(param.NacosConf); err != nil {
+		return nil, err
+	}
+	if len(param.Instances) == 0 {
+		return nil, fmt.Errorf("nacos register instances is empty")
+	}
+
+	namingClient, err := newNacosNamingClient(param.NacosConf, param.NamespaceID)
+	if err != nil {
+		return nil, err
+	}
+
+	cleanupFns := make([]func(), 0, len(param.Instances))
+	for _, inst := range param.Instances {
+		if strings.TrimSpace(inst.ServiceName) == "" {
+			cleanupRegistered(cleanupFns)
+			return nil, fmt.Errorf("service name is required")
+		}
+		if inst.Port == 0 {
+			cleanupRegistered(cleanupFns)
+			return nil, fmt.Errorf("service port is required")
+		}
+
+		groupName := inst.GroupName
+		if groupName == "" {
+			groupName = DefaultNacosGroup
+		}
+		clusterName := inst.ClusterName
+		if clusterName == "" {
+			clusterName = DefaultNacosCluster
+		}
+		weight := inst.Weight
+		if weight <= 0 {
+			weight = 1
+		}
+
+		registerParam := vo.RegisterInstanceParam{
+			Ip:          inst.IP,
+			Port:        inst.Port,
+			Weight:      weight,
+			Enable:      inst.Enable,
+			Healthy:     inst.Healthy,
+			Metadata:    inst.Metadata,
+			ClusterName: clusterName,
+			ServiceName: inst.ServiceName,
+			GroupName:   groupName,
+			Ephemeral:   inst.Ephemeral,
+		}
+
+		ok, registerErr := namingClient.RegisterInstance(registerParam)
+		if registerErr != nil {
+			cleanupRegistered(cleanupFns)
+			return nil, fmt.Errorf("register instance failed service=%s ip=%s port=%d: %w", inst.ServiceName, inst.IP, inst.Port, registerErr)
+		}
+		if !ok {
+			cleanupRegistered(cleanupFns)
+			return nil, fmt.Errorf("register instance failed service=%s ip=%s port=%d: sdk returned false", inst.ServiceName, inst.IP, inst.Port)
+		}
+
+		cleanupFns = append(cleanupFns, func() {
+			deregisterParam := vo.DeregisterInstanceParam{
+				Ip:          inst.IP,
+				Port:        inst.Port,
+				Cluster:     clusterName,
+				ServiceName: inst.ServiceName,
+				GroupName:   groupName,
+				Ephemeral:   inst.Ephemeral,
+			}
+			_, _ = namingClient.DeregisterInstance(deregisterParam)
+		})
+	}
+
+	return func() {
+		cleanupRegistered(cleanupFns)
+	}, nil
+}
+
+func cleanupRegistered(cleanupFns []func()) {
+	for i := len(cleanupFns) - 1; i >= 0; i-- {
+		cleanupFns[i]()
+	}
+}
+
+func newNacosNamingClient(nacosConf *PkgNacosConfig, namespaceID string) (naming_client.INamingClient, error) {
+	serverConfigs := make([]constant.ServerConfig, 0, len(nacosConf.Servers))
+	for _, srv := range nacosConf.Servers {
+		serverConfigs = append(serverConfigs, *constant.NewServerConfig(srv.Addr, srv.Port))
+	}
+
+	if len(serverConfigs) == 0 {
+		return nil, fmt.Errorf("no nacos servers configured")
+	}
+
+	clientConfig := constant.ClientConfig{
+		NamespaceId:         namespaceID,
+		Username:            nacosConf.Username,
+		Password:            nacosConf.Password,
+		LogDir:              nacosConf.LogDir,
+		CacheDir:            nacosConf.CacheDir,
+		LogLevel:            nacosConf.LogLevel,
+		NotLoadCacheAtStart: true,
+	}
+
+	client, err := clients.NewNamingClient(vo.NacosClientParam{
+		ClientConfig:  &clientConfig,
+		ServerConfigs: serverConfigs,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create nacos naming client: %w", err)
+	}
+
+	return client, nil
+}
+
+func ResolveRegisterIP() (string, error) {
+	if ip := strings.TrimSpace(os.Getenv("NACOS_REGISTER_IP")); ip != "" {
+		parsed := net.ParseIP(ip)
+		if parsed == nil {
+			return "", fmt.Errorf("invalid NACOS_REGISTER_IP: %s", ip)
+		}
+		return ip, nil
+	}
+
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err == nil {
+		defer conn.Close()
+		if localAddr, ok := conn.LocalAddr().(*net.UDPAddr); ok && localAddr.IP != nil {
+			return localAddr.IP.String(), nil
+		}
+	}
+
+	addrs, ifErr := net.InterfaceAddrs()
+	if ifErr != nil {
+		return "", ifErr
+	}
+	for _, addr := range addrs {
+		ipNet, ok := addr.(*net.IPNet)
+		if !ok || ipNet.IP == nil {
+			continue
+		}
+		if ipNet.IP.IsLoopback() || ipNet.IP.IsLinkLocalUnicast() {
+			continue
+		}
+		if ipv4 := ipNet.IP.To4(); ipv4 != nil {
+			return ipv4.String(), nil
+		}
+	}
+
+	return "", fmt.Errorf("no non-loopback ipv4 address found")
+}

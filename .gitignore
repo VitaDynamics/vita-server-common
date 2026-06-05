@@ -1,0 +1,30 @@
+# Go
+/bin
+/dist
+*.exe
+*.out
+vendor/
+
+# Node
+node_modules/
+.npm/
+admin-frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# secrets
+*.local.yaml
+values-secret.yaml
+*.pem
+!**/test_*.pem
+!**/dev_*.pem
+admin-frontend/tsconfig.tsbuildinfo
+.DS_Store
+# Docker data directories (local development)
+dockerData/
