@@ -31,14 +31,14 @@ func InitNacosConfigClient(nacosConf *PkgNacosConfig, namespace string) config_c
 }
 
 // GetNacosConfigClient returns a reusable global nacos config client for the given namespace.
-func GetNacosConfigClient(namespaceID string) (*config_client.IConfigClient, error) {
+func GetNacosConfigClient(namespaceID string) (config_client.IConfigClient, error) {
 	nacosClientMu.RLock()
 	nacosConf := nacosClientConf
 	client, ok := nacosConfigClients[namespaceID]
 	nacosClientMu.RUnlock()
 
 	if ok {
-		return &client, nil
+		return client, nil
 	}
 
 	if nacosConf == nil || !nacosConf.Enabled {
@@ -53,9 +53,9 @@ func GetNacosConfigClient(namespaceID string) (*config_client.IConfigClient, err
 	nacosClientMu.Lock()
 	if existing, exists := nacosConfigClients[namespaceID]; exists {
 		nacosClientMu.Unlock()
-		return &existing, nil
+		return existing, nil
 	}
-	nacosConfigClients[namespaceID] = *created
+	nacosConfigClients[namespaceID] = created
 	nacosClientMu.Unlock()
 
 	return created, nil
