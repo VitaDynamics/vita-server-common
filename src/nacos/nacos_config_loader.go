@@ -18,7 +18,7 @@ var (
 
 // InitNacosConfigClient initializes the global nacos config client manager.
 // It eagerly creates the default-namespace client and enables lazy reuse for other namespaces.
-func InitNacosConfigClient(nacosConf *PkgNacosConfig, namespace string) *config_client.IConfigClient {
+func InitNacosConfigClient(nacosConf *PkgNacosConfig, namespace string) config_client.IConfigClient {
 	if err := validateNacosConfig(nacosConf); err != nil {
 		return nil
 	}
@@ -131,7 +131,7 @@ func validateNacosConfig(nacosConf *PkgNacosConfig) error {
 	return nil
 }
 
-func newNacosConfigClient(nacosConf *PkgNacosConfig, namespaceID string) (*config_client.IConfigClient, error) {
+func newNacosConfigClient(nacosConf *PkgNacosConfig, namespaceID string) (config_client.IConfigClient, error) {
 	// Convert servers to SDK format
 	serverConfigs := make([]constant.ServerConfig, 0, len(nacosConf.Servers))
 	for _, srv := range nacosConf.Servers {
@@ -160,5 +160,5 @@ func newNacosConfigClient(nacosConf *PkgNacosConfig, namespaceID string) (*confi
 		return nil, fmt.Errorf("failed to create nacos config client: %w", err)
 	}
 
-	return &client, nil
+	return client, nil
 }
