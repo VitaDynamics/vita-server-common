@@ -48,7 +48,7 @@ type GenWechatClientParam struct {
 	MchId         string
 	ApiKeyV3      string
 	NotifyUrl     string
-	privateKeyPEM string
+	PrivateKeyPEM string
 	LogCtx        map[string]any
 }
 
@@ -63,8 +63,8 @@ func NewWechatClient(params GenWechatClientParam) *WechatClient {
 		},
 	}
 
-	if params.privateKeyPEM != "" {
-		if err := client.loadPrivateKey(params.privateKeyPEM); err != nil {
+	if params.PrivateKeyPEM != "" {
+		if err := client.loadPrivateKey(params.PrivateKeyPEM); err != nil {
 			logrus.WithFields(logrus.Fields(params.LogCtx)).Errorf("load private key failed: %v", err)
 			return nil
 		}
