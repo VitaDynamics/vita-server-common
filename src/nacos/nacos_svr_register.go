@@ -5,11 +5,18 @@ import (
 	"net"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/nacos-group/nacos-sdk-go/v2/clients"
 	"github.com/nacos-group/nacos-sdk-go/v2/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
+)
+
+var (
+	namingClientMu   sync.RWMutex
+	namingClientConf *PkgNacosConfig
+	namingClients    = make(map[string]naming_client.INamingClient)
 )
 
 const (
@@ -46,7 +53,7 @@ func RegisterServicesToNacos(param RegisterServicesParam) (func(), error) {
 		return nil, fmt.Errorf("nacos register instances is empty")
 	}
 
-	namingClient, err := newNacosNamingClient(param.NacosConf, param.NamespaceID)
+	namingClient, err := GetNacosNamingClient(param.NacosConf, param.NamespaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -120,6 +127,36 @@ func cleanupRegistered(cleanupFns []func()) {
 	for i := len(cleanupFns) - 1; i >= 0; i-- {
 		cleanupFns[i]()
 	}
+}
+
+// GetNacosNamingClient returns a reusable naming client for the given namespace.
+// Clients are cached for the process lifetime and shared by service registration and gRPC discovery.
+func GetNacosNamingClient(nacosConf *PkgNacosConfig, namespaceID string) (naming_client.INamingClient, error) {
+	if err := validateNacosConfig(nacosConf); err != nil {
+		return nil, err
+	}
+
+	namingClientMu.RLock()
+	client, ok := namingClients[namespaceID]
+	namingClientMu.RUnlock()
+	if ok {
+		return client, nil
+	}
+
+	created, err := newNacosNamingClient(nacosConf, namespaceID)
+	if err != nil {
+		return nil, err
+	}
+
+	namingClientMu.Lock()
+	defer namingClientMu.Unlock()
+	if existing, exists := namingClients[namespaceID]; exists {
+		created.CloseClient()
+		return existing, nil
+	}
+	namingClientConf = nacosConf
+	namingClients[namespaceID] = created
+	return created, nil
 }
 
 func newNacosNamingClient(nacosConf *PkgNacosConfig, namespaceID string) (naming_client.INamingClient, error) {

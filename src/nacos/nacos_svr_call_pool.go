@@ -202,11 +202,7 @@ package nacos
 
 // 	conn, err := grpc.NewClient(addr,
 // 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-// 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
-// 			Time:                10 * time.Second,
-// 			Timeout:             3 * time.Second,
-// 			PermitWithoutStream: true,
-// 		}),
+// 		grpc.WithKeepaliveParams(defaultGrpcKeepaliveParams()),
 // 	)
 // 	if err != nil {
 // 		logrus.WithFields(logrus.Fields{
@@ -252,11 +248,7 @@ package nacos
 
 // 	newConn, err := grpc.NewClient(addr,
 // 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-// 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
-// 			Time:                10 * time.Second,
-// 			Timeout:             3 * time.Second,
-// 			PermitWithoutStream: true,
-// 		}),
+// 		grpc.WithKeepaliveParams(defaultGrpcKeepaliveParams()),
 // 	)
 // 	if err != nil {
 // 		return err

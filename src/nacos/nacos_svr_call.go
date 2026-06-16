@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nacos-group/nacos-sdk-go/v2/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -22,7 +23,20 @@ const (
 	traceIDKey    traceIDContextKey = "trace_id"
 	traceIDField                    = "trace_id"
 	traceIDHeader                   = "x-trace-id"
+
+	// gRPC server default enforcement: MinTime=5m, PermitWithoutStream=false.
+	// Avoid idle pings and keep interval conservative to prevent ENHANCE_YOUR_CALM / too_many_pings.
+	grpcKeepaliveTime    = 30 * time.Second
+	grpcKeepaliveTimeout = 10 * time.Second
 )
+
+func defaultGrpcKeepaliveParams() keepalive.ClientParameters {
+	return keepalive.ClientParameters{
+		Time:                grpcKeepaliveTime,
+		Timeout:             grpcKeepaliveTimeout,
+		PermitWithoutStream: false,
+	}
+}
 
 // GrpcCallParam holds all parameters needed for a single gRPC call via Nacos discovery.
 type GrpcCallParam struct {
@@ -30,16 +44,20 @@ type GrpcCallParam struct {
 	Request     interface{} //方法入参
 	Reply       interface{} //方法出参
 	CallOptions []grpc.CallOption
+	Retry       bool //是否启用重试（连接失败时重试一次）
+	RetryCount  int  //重试次数，默认为1次
 }
 
-// resolveGrpcAddrFromNacos creates a temporary naming client and returns one healthy instance address.
-func resolveGrpcAddrFromNacos(nacosConf *PkgNacosConfig, namespaceID, serviceName, groupName, clusterName string) (string, error) {
-	namingClient, err := newNacosNamingClient(nacosConf, namespaceID)
-	if err != nil {
-		return "", err
-	}
-	defer namingClient.CloseClient() // Fix: close nacos client to prevent resource leak
+// SelectGrpcAddr picks one healthy instance address via a reusable naming client.
+func SelectGrpcAddr(namingClient naming_client.INamingClient, serviceName, groupName, clusterName string) (string, error) {
+	return selectGrpcAddrFromNacos(namingClient, serviceName, groupName, clusterName)
+}
 
+// selectGrpcAddrFromNacos picks one healthy instance address via a reusable naming client.
+func selectGrpcAddrFromNacos(namingClient naming_client.INamingClient, serviceName, groupName, clusterName string) (string, error) {
+	if namingClient == nil {
+		return "", fmt.Errorf("nacos naming client is nil")
+	}
 	if groupName == "" {
 		groupName = DefaultNacosGroup
 	}
@@ -61,31 +79,33 @@ func resolveGrpcAddrFromNacos(nacosConf *PkgNacosConfig, namespaceID, serviceNam
 }
 
 // ---------------------------------------------------------------------------
-// NacosGrpcClient —  NacosGrpcClient — 连接服务用的方式提供grpc client，自动维护连接的健康状态并重连
+// NacosGrpcClient — 连接服务用的方式提供grpc client，自动维护连接的健康状态并重连
 // ---------------------------------------------------------------------------
 
 // NacosGrpcClient maintains a reusable gRPC connection to a Nacos-registered service.
 // It re-resolves and reconnects automatically when the connection becomes unhealthy.
 type NacosGrpcClient struct {
-	mu          sync.Mutex
-	conn        *grpc.ClientConn
-	nacosConf   *PkgNacosConfig
-	namespaceID string
-	serviceName string
-	groupName   string
-	clusterName string
+	mu           sync.Mutex
+	conn         *grpc.ClientConn
+	namingClient naming_client.INamingClient
+	nacosConf    *PkgNacosConfig
+	namespaceID  string
+	serviceName  string
+	groupName    string
+	clusterName  string
 }
 
 // NacosGrpcClientConfig holds configuration for creating a NacosGrpcClient.
 type NacosGrpcClientConfig struct {
-	NacosConf   *PkgNacosConfig
-	NamespaceID string
-	ServiceName string
-	GroupName   string // optional, defaults to DefaultNacosGroup
-	ClusterName string // optional
+	NacosConf    *PkgNacosConfig
+	NamespaceID  string
+	ServiceName  string
+	GroupName    string                      // optional, defaults to DefaultNacosGroup
+	ClusterName  string                      // optional
+	NamingClient naming_client.INamingClient // optional: inject for tests; if nil, obtained via GetNacosNamingClient
 }
 
-// NewNacosGrpcClient creates a pool and eagerly establishes the first connection.
+// NewNacosGrpcClient creates a client and eagerly establishes the first connection.
 func NewNacosGrpcClient(cfg NacosGrpcClientConfig) (*NacosGrpcClient, error) {
 	if cfg.NacosConf == nil {
 		return nil, fmt.Errorf("nacos config is nil")
@@ -97,23 +117,49 @@ func NewNacosGrpcClient(cfg NacosGrpcClientConfig) (*NacosGrpcClient, error) {
 		cfg.GroupName = DefaultNacosGroup
 	}
 
-	pool := &NacosGrpcClient{
-		nacosConf:   cfg.NacosConf,
-		namespaceID: cfg.NamespaceID,
-		serviceName: cfg.ServiceName,
-		groupName:   cfg.GroupName,
-		clusterName: cfg.ClusterName,
+	var namingClient naming_client.INamingClient
+	if cfg.NamingClient != nil {
+		namingClient = cfg.NamingClient
+	} else {
+		var err error
+		namingClient, err = GetNacosNamingClient(cfg.NacosConf, cfg.NamespaceID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	if err := pool.connect(context.Background()); err != nil {
+	client := &NacosGrpcClient{
+		namingClient: namingClient,
+		nacosConf:    cfg.NacosConf,
+		namespaceID:  cfg.NamespaceID,
+		serviceName:  cfg.ServiceName,
+		groupName:    cfg.GroupName,
+		clusterName:  cfg.ClusterName,
+	}
+
+	conn, err := client.dialConn(context.Background())
+	if err != nil {
 		return nil, err
 	}
-	return pool, nil
+	client.conn = conn
+	return client, nil
+}
+
+// resolveMaxAttempts returns total invoke attempts based on Retry and RetryCount.
+// RetryCount is the number of retries after the first failure; defaults to 1 when Retry is true.
+func ResolveMaxAttempts(param GrpcCallParam) int {
+	if !param.Retry {
+		return 1
+	}
+	retryCount := param.RetryCount
+	if retryCount <= 0 {
+		retryCount = 1
+	}
+	return 1 + retryCount
 }
 
 // Invoke calls the given gRPC full method through the pooled connection.
 // The connection is automatically refreshed if it is no longer ready.
-// Fix: Add retry logic to handle race condition where connection fails after retrieval.
 func (p *NacosGrpcClient) Invoke(ctx context.Context, param GrpcCallParam) error {
 	start := time.Now()
 	ctx, traceID := injectTraceID(ctx)
@@ -123,33 +169,33 @@ func (p *NacosGrpcClient) Invoke(ctx context.Context, param GrpcCallParam) error
 		"method":  param.FullMethod,
 	})
 
-	// Fix: Retry up to 2 times to handle race condition where connection becomes unhealthy
-	maxRetries := 2
+	maxAttempts := ResolveMaxAttempts(param)
 	var lastErr error
 
-	for attempt := 0; attempt < maxRetries; attempt++ {
+	for attempt := 0; attempt < maxAttempts; attempt++ {
 		conn, err := p.getConn(ctx)
 		if err != nil {
-			logrus.WithFields(logCtx).Errorf("get pooled grpc connection failed (attempt %d): %v", attempt+1, err)
 			lastErr = err
-			continue
+			logCtx["attempt"] = attempt + 1
+			if attempt < maxAttempts-1 {
+				logrus.WithFields(logCtx).Warnf("get pooled grpc connection failed (attempt %d/%d), will retry: %v", attempt+1, maxAttempts, err)
+				continue
+			}
+			logrus.WithFields(logCtx).Errorf("get pooled grpc connection failed after %d attempts: %v", maxAttempts, err)
+			return err
 		}
 
 		if err := conn.Invoke(ctx, param.FullMethod, param.Request, param.Reply, param.CallOptions...); err != nil {
 			lastErr = err
 			logCtx["elapsed_ms"] = time.Since(start).Milliseconds()
 			logCtx["attempt"] = attempt + 1
-			logrus.WithFields(logCtx).Warnf("grpc invoke failed, will retry: %v", err)
 
-			// If this is not the last attempt, mark connection as bad and retry
-			if attempt < maxRetries-1 {
-				p.mu.Lock()
-				_ = p.conn.Close()
-				p.conn = nil
-				p.mu.Unlock()
+			if attempt < maxAttempts-1 {
+				logrus.WithFields(logCtx).Warnf("grpc invoke failed (attempt %d/%d), will retry: %v", attempt+1, maxAttempts, err)
+				p.invalidateConn()
 				continue
 			}
-			logrus.WithFields(logCtx).Errorf("grpc invoke via pool failed after %d attempts: %v", maxRetries, err)
+			logrus.WithFields(logCtx).Errorf("grpc invoke failed after %d attempts: %v", maxAttempts, err)
 			return err
 		}
 
@@ -157,7 +203,7 @@ func (p *NacosGrpcClient) Invoke(ctx context.Context, param GrpcCallParam) error
 		if attempt > 0 {
 			logCtx["attempt"] = attempt + 1
 		}
-		logrus.WithFields(logCtx).Info("grpc invoke via pool succeeded")
+		logrus.WithFields(logCtx).Info("grpc invoke succeeded")
 		return nil
 	}
 
@@ -174,67 +220,89 @@ func (p *NacosGrpcClient) Close() {
 	}
 }
 
+func (p *NacosGrpcClient) invalidateConn() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.conn != nil {
+		_ = p.conn.Close()
+		p.conn = nil
+	}
+}
+
 func (p *NacosGrpcClient) getConn(ctx context.Context) (*grpc.ClientConn, error) {
+	if conn := p.pickHealthyConn(); conn != nil {
+		return conn, nil
+	}
+
+	newConn, err := p.dialConn(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	if p.conn != nil {
 		state := p.conn.GetState()
-		// Fix: Check for READY, IDLE, and CONNECTING states explicitly.
-		// CONNECTING is acceptable - let Invoke handle it.
 		if state == connectivity.Ready || state == connectivity.Idle || state == connectivity.Connecting {
+			_ = newConn.Close()
 			return p.conn, nil
 		}
-		// Only reconnect if connection is definitely dead
-		if state == connectivity.Shutdown || state == connectivity.TransientFailure {
-			logrus.WithFields(logrus.Fields{
-				"service": p.serviceName,
-				"state":   state.String(),
-			}).Warn("connection is in bad state, reconnecting")
-		}
 		_ = p.conn.Close()
-		p.conn = nil
 	}
-
-	if err := p.connect(ctx); err != nil {
-		return nil, err
-	}
+	p.conn = newConn
 	return p.conn, nil
 }
 
-func (p *NacosGrpcClient) connect(ctx context.Context) error {
-	// Fix: Add timeout to prevent indefinite blocking if Nacos is unreachable
+func (p *NacosGrpcClient) pickHealthyConn() *grpc.ClientConn {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.conn == nil {
+		return nil
+	}
+
+	state := p.conn.GetState()
+	if state == connectivity.Ready || state == connectivity.Idle || state == connectivity.Connecting {
+		return p.conn
+	}
+
+	if state == connectivity.Shutdown || state == connectivity.TransientFailure {
+		logrus.WithFields(logrus.Fields{
+			"service": p.serviceName,
+			"state":   state.String(),
+		}).Warn("connection is in bad state, reconnecting")
+	}
+	_ = p.conn.Close()
+	p.conn = nil
+	return nil
+}
+
+func (p *NacosGrpcClient) dialConn(ctx context.Context) (*grpc.ClientConn, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	addr, err := resolveGrpcAddrFromNacos(p.nacosConf, p.namespaceID, p.serviceName, p.groupName, p.clusterName)
+	addr, err := selectGrpcAddrFromNacos(p.namingClient, p.serviceName, p.groupName, p.clusterName)
 	logCtx := buildLogCtxWithTrace(ctx, logrus.Fields{
 		"service": p.serviceName,
 	})
 	if err != nil {
 		logrus.WithFields(logCtx).Errorf("resolve grpc address failed: %v", err)
-		return err
+		return nil, err
 	}
 	logCtx["addr"] = addr
 
-	// Use grpc.NewClient with keepalive to detect stale connections
-	// gRPC uses lazy connection by default, so we don't wait for Ready state
 	conn, err := grpc.NewClient(addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                10 * time.Second, //十秒一次心跳检测
-			Timeout:             3 * time.Second,  //检测时等待3秒
-			PermitWithoutStream: true,
-		}),
+		grpc.WithKeepaliveParams(defaultGrpcKeepaliveParams()),
 	)
 	if err != nil {
 		logrus.WithFields(logCtx).Errorf("create grpc client failed: %v", err)
-		return fmt.Errorf("grpc connect to %s (service=%s) failed: %w", addr, p.serviceName, err)
+		return nil, fmt.Errorf("grpc connect to %s (service=%s) failed: %w", addr, p.serviceName, err)
 	}
 
-	p.conn = conn
-	logrus.WithFields(logCtx).Info("grpc pool connection initialized (lazy connection)")
-	return nil
+	logrus.WithFields(logCtx).Info("grpc connection dialed (lazy connection)")
+	return conn, nil
 }
 
 func injectTraceID(ctx context.Context) (context.Context, string) {
