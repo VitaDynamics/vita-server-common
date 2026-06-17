@@ -68,7 +68,7 @@ type ConfigParam struct {
 
 // 根据传入的client，dataId和group从Nacos获取配置内容，返回原始字符串形式的配置内容。如果Nacos未启用或获取失败，则返回错误。
 // Returns the config content as raw string. Returns error if Nacos is disabled or fetch fails.
-func GetNacosConfig(client *config_client.IConfigClient, param ConfigParam) (string, error) {
+func GetNacosConfig(client config_client.IConfigClient, param ConfigParam) (string, error) {
 	if client == nil {
 		return "", fmt.Errorf("nacos client is not initialized")
 	}
@@ -76,7 +76,7 @@ func GetNacosConfig(client *config_client.IConfigClient, param ConfigParam) (str
 		param.Group = "DEFAULT_GROUP"
 	}
 
-	content, err := (*client).GetConfig(vo.ConfigParam{
+	content, err := client.GetConfig(vo.ConfigParam{
 		DataId: param.DataId,
 		Group:  param.Group,
 	})
@@ -99,7 +99,7 @@ func GetNacosConfig(client *config_client.IConfigClient, param ConfigParam) (str
 //
 // Returns error if Nacos is disabled or listener registration fails.
 // The listener runs in the background until the application stops.
-func WatchNacosConfig(client *config_client.IConfigClient, namespaceID, group, dataID string,
+func WatchNacosConfig(client config_client.IConfigClient, namespaceID, group, dataID string,
 	onChange func(content string)) error {
 
 	if client == nil {
@@ -108,7 +108,7 @@ func WatchNacosConfig(client *config_client.IConfigClient, namespaceID, group, d
 	if group == "" {
 		group = "DEFAULT_GROUP"
 	}
-	return (*client).ListenConfig(vo.ConfigParam{
+	return client.ListenConfig(vo.ConfigParam{
 		DataId: dataID,
 		Group:  group,
 		OnChange: func(namespace, group, dataId, data string) {
