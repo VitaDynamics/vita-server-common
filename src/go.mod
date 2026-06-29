@@ -19,6 +19,7 @@ require (
 	github.com/smartwalle/alipay/v3 v3.2.29
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.111
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.3.93
+	github.com/volcengine/ve-tos-golang-sdk/v2 v2.9.6
 	google.golang.org/grpc v1.67.3
 )
 
