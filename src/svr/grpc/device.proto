@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package devicesvr;
+
+option go_package = "service/device;devicesvr";
+
+import "google/protobuf/timestamp.proto";
+
+// GetDevicesBySnListRequest 根据 SN 列表查询设备信息
+message GetDevicesBySnListRequest {
+  repeated string snList = 1;
+}
+
+// DeviceInfo 设备信息（不包含敏感字段 scramble_code）
+message DeviceInfo {
+  string id = 1;
+  string snNumber = 2;                              // 设备序列号
+  string imeiNumber = 3;                            // 设备 IMEI 号
+  string owner = 4;                                  // 创建者/所有者
+  int64 orgId = 5;                                  // 机构 ID
+  google.protobuf.Timestamp createTime = 6;         // 创建时间
+  google.protobuf.Timestamp updateTime = 7;         // 更新时间
+  string name = 8;                                   // 设备名称
+  string token = 9;                                  // 设备 token
+  string alias = 10;                                 // 设备别名
+  string pid = 11;                                   // 产品 ID
+  string gid = 12;                                   // 分组 ID
+  string description = 13;                           // 产品说明
+  string status = 14;                                // 状态
+  string factoryInstallVersion = 15;               // 出厂安装版本
+  string factoryDownloadVersion = 16;              // 出厂下载版本
+  string otaVersion = 17;                           // 固件版本（已废弃，向后兼容）
+  int64 rosDomainId = 18;                          // ROS 域 ID
+  string parentId = 19;                             // 父设备 ID（子设备时父设备为网关）
+  string deviceType = 20;                           // 设备类型
+  string linkStatus = 21;                           // 连接状态
+  google.protobuf.Timestamp lastTime = 22;          // 最后一次在线时间
+  string lifecycleStatus = 23;                      // 生命周期状态
+  string deviceBelongingType = 24;                 // 设备归属类型
+}
+
+// GetDevicesBySnListResponse 设备信息列表
+message GetDevicesInfoListResponse {
+  repeated DeviceInfo devices = 1;
+}
+
+// SearchDevicesRequest 根据 SN、名称、机器人类型查询设备信息（条件可选，支持组合查询）
+message SearchDevicesRequest {
+  string snNumber = 1;   // 设备序列号（精确匹配，空则忽略）
+  string name = 2;        // 设备名称（模糊匹配，空则忽略）
+  string deviceType = 3; // 机器人类型/设备类型（精确匹配，空则忽略）
+  string deviceId = 4; //设备id
+}
+
+// DeviceMetricDaily 设备每日累计指标
+message DeviceMetricDaily {
+  string id = 1;
+  google.protobuf.Timestamp createTime = 2;
+  google.protobuf.Timestamp updateTime = 3;
+  string deviceId = 4;                              // device id
+  string snNumber = 5;                              // device sn number
+  string metricType = 6;                            // metric type
+  google.protobuf.Timestamp statDate = 7;           // stat date
+  double metricValue = 8;                           // cumulative metric value
+}
+
+// GetDailyMetricsRequest 查询指定设备在日期范围内的每日指标
+message GetDailyMetricsRequest {
+  repeated string snList = 1;
+  google.protobuf.Timestamp startDate = 2;
+  google.protobuf.Timestamp endDate = 3;
+}
+
+// GetLatestMetricsBeforeDateRequest 查询指定设备和指标在某日期前最近一条累计指标
+message GetLatestMetricsBeforeDateRequest {
+  repeated string deviceSns = 1;
+  google.protobuf.Timestamp beforeDate = 2;
+  repeated string metricTypes = 3;
+}
+
+// GetDailyMetricsByTypeRequest 查询指定设备在日期范围内的指定类型指标
+message GetDailyMetricsByTypeRequest {
+  repeated string deviceSns = 1;
+  google.protobuf.Timestamp startDate = 2;
+  google.protobuf.Timestamp endDate = 3;
+  string metricType = 4;
+}
+
+// GetDeviceMetricsListResponse 设备每日指标列表
+message GetDeviceMetricsListResponse {
+  repeated DeviceMetricDaily metrics = 1;
+}
+
+// BatchSaveMetricsRequest 批量保存设备每日累计指标
+message BatchSaveMetricsRequest {
+  repeated DeviceMetricDaily metrics = 1;
+}
+
+// BatchSaveMetricsResponse 批量保存结果
+message BatchSaveMetricsResponse {}
+
+service DeviceService {
+  // 根据 SN 列表批量查询设备信息
+  rpc GetDevicesBySnList(GetDevicesBySnListRequest) returns (GetDevicesInfoListResponse);
+
+  // 根据 SN、名称、机器人类型查询设备信息
+  rpc SearchDevicesByCondition(SearchDevicesRequest) returns (GetDevicesInfoListResponse);
+
+  // 查询指定设备在日期范围内的每日指标
+  rpc GetDailyMetrics(GetDailyMetricsRequest) returns (GetDeviceMetricsListResponse);
+
+  // 查询指定设备和指标在某日期前最近一条累计指标
+  rpc GetLatestMetricsBeforeDate(GetLatestMetricsBeforeDateRequest) returns (GetDeviceMetricsListResponse);
+
+  // 查询指定设备在日期范围内的指定类型指标
+  rpc GetDailyMetricsByType(GetDailyMetricsByTypeRequest) returns (GetDeviceMetricsListResponse);
+
+  // 批量保存设备每日累计指标
+  rpc BatchSaveMetrics(BatchSaveMetricsRequest) returns (BatchSaveMetricsResponse);
+}

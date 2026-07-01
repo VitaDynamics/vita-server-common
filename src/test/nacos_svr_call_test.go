@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	"github.com/VitaDynamics/vita-server-common/src/nacos"
+	"github.com/VitaDynamics/vita-server-common/src/utils/nacos"
 )
 
 func TestResolveMaxAttempts(t *testing.T) {

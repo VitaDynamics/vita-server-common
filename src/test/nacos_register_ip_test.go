@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/VitaDynamics/vita-server-common/src/nacos"
+	"github.com/VitaDynamics/vita-server-common/src/utils/nacos"
 )
 
 func TestResolveRegisterIP_FromEnv(t *testing.T) {

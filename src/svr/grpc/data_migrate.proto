@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package datamigrate;
+
+option go_package = "service/migrate;datamigrate";
+
+service DataMigrateService {
+  rpc MigrateTableData(MigrateTableDataRequest) returns (MigrateTableDataResponse);
+
+  rpc BatchMigrateTableData(BatchMigrateTableDataRequest) returns (BatchMigrateTableDataResponse);
+}
+
+message MigrateTableDataRequest {
+  // 目标表名，如 "app_user"、"device_services" 等
+  string table_name = 1;
+
+  // 操作类型："insert" 或 "update"
+  string operate_type = 2;
+
+  // 字段和对应的值
+  map<string, string> data = 3;
+}
+
+message MigrateTableDataResponse {
+  // 状态码：0 成功，其他失败
+  int32 status = 1;
+
+  // 结果说明
+  string message = 2;
+}
+
+message BatchMigrateTableDataRequest {
+  // 目标表名
+  string table_name = 1;
+
+  // 操作类型："insert" 或 "update"
+  string operate_type = 2;
+
+  // 批量数据，每条记录是一个 map<string, string>
+  repeated BatchData batch_data = 3;
+}
+
+message BatchData {
+  // 字段和对应的值
+  map<string, string> data = 1;
+}
+
+message BatchMigrateTableDataResponse {
+  // 状态码：0 全部成功，1 部分失败，2 全部失败
+  int32 status = 1;
+
+  // 成功条数
+  int32 success_count = 2;
+
+  // 失败条数
+  int32 failed_count = 3;
+
+  // 结果说明
+  string message = 4;
+
+  // 失败详情
+  repeated FailedRecord failed_records = 5;
+}
+
+message FailedRecord {
+  // 失败行索引
+  int32 row_index = 1;
+
+  // 失败原因
+  string reason = 2;
+}
