@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/VitaDynamics/vita-server-common/src/localtime"
+	"github.com/VitaDynamics/vita-server-common/src/utils/localtime"
 
 	"github.com/sirupsen/logrus"
 )
