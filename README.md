@@ -182,6 +182,10 @@ vita-server-common/
 
 ---
 
+grpc生成
+cd src/grpc/
+protoc --proto_path=../grpc --go_out=. --go-grpc_out=. ../grpc/data_migrate.proto
+
 ## 快速开始
 
 （待补充）
