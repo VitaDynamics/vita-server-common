@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package cloudplatform;
+
+option go_package = "service/cmd_service;cloudplatform";
+
+service CloudPlatformService {
+  // app-server 向 cloud-platform 下发设备指令
+  rpc SendCommand(SendCommandRequest) returns (SendCommandResponse);
+}
+
+message SendCommandRequest {
+  // 指令类型
+  string cmdType = 1;
+
+  // 设备 ID
+  string deviceId = 2;
+
+  // 用户手机号
+  string phone = 3;
+
+  // 设备 SN
+  string deviceSn = 4;
+
+  // 指令载荷，调用方按业务约定传递 JSON 或普通字符串
+  string payload = 5;
+}
+
+message SendCommandResponse {
+  // 状态码，0 表示成功，其他表示失败
+  int32 code = 1;
+
+  // 结果说明
+  string msg = 2;
+}

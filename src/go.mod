@@ -21,6 +21,7 @@ require (
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.3.93
 	github.com/volcengine/ve-tos-golang-sdk/v2 v2.9.6
 	google.golang.org/grpc v1.67.3
+	google.golang.org/protobuf v1.36.10
 )
 
 require (
@@ -82,7 +83,6 @@ require (
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/time v0.4.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 // indirect
-	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/ini.v1 v1.67.2 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 )
