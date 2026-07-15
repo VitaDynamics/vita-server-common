@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package datamigrate;
 
-option go_package = "service/migrate;datamigrate";
+option go_package = "service//migrate;datamigrate";
 
 service DataMigrateService {
   rpc MigrateTableData(MigrateTableDataRequest) returns (MigrateTableDataResponse);
