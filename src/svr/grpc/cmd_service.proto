@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package cloudplatform;
+package cmdsvr;
 
-option go_package = "service/cmd_service;cloudplatform";
+option go_package = "service/cmd_service;cmdsvr";
 
 service CloudPlatformService {
   // app-server 向 cloud-platform 下发设备指令

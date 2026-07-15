@@ -4,7 +4,7 @@
 // - protoc             v5.29.3
 // source: cmd_service.proto
 
-package cloudplatform
+package cmdsvr
 
 import (
 	context "context"
@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CloudPlatformService_SendCommand_FullMethodName = "/cloudplatform.CloudPlatformService/SendCommand"
+	CloudPlatformService_SendCommand_FullMethodName = "/cmdsvr.CloudPlatformService/SendCommand"
 )
 
 // CloudPlatformServiceClient is the client API for CloudPlatformService service.
@@ -110,7 +110,7 @@ func _CloudPlatformService_SendCommand_Handler(srv interface{}, ctx context.Cont
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var CloudPlatformService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "cloudplatform.CloudPlatformService",
+	ServiceName: "cmdsvr.CloudPlatformService",
 	HandlerType: (*CloudPlatformServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

@@ -4,7 +4,7 @@
 // 	protoc        v5.29.3
 // source: cmd_service.proto
 
-package cloudplatform
+package cmdsvr
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -160,7 +160,7 @@ var File_cmd_service_proto protoreflect.FileDescriptor
 
 const file_cmd_service_proto_rawDesc = "" +
 	"\n" +
-	"\x11cmd_service.proto\x12\rcloudplatform\"\x96\x01\n" +
+	"\x11cmd_service.proto\x12\x06cmdsvr\"\x96\x01\n" +
 	"\x12SendCommandRequest\x12\x18\n" +
 	"\acmdType\x18\x01 \x01(\tR\acmdType\x12\x1a\n" +
 	"\bdeviceId\x18\x02 \x01(\tR\bdeviceId\x12\x14\n" +
@@ -169,9 +169,9 @@ const file_cmd_service_proto_rawDesc = "" +
 	"\apayload\x18\x05 \x01(\tR\apayload\";\n" +
 	"\x13SendCommandResponse\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\x05R\x04code\x12\x10\n" +
-	"\x03msg\x18\x02 \x01(\tR\x03msg2l\n" +
-	"\x14CloudPlatformService\x12T\n" +
-	"\vSendCommand\x12!.cloudplatform.SendCommandRequest\x1a\".cloudplatform.SendCommandResponseB#Z!service/cmd_service;cloudplatformb\x06proto3"
+	"\x03msg\x18\x02 \x01(\tR\x03msg2^\n" +
+	"\x14CloudPlatformService\x12F\n" +
+	"\vSendCommand\x12\x1a.cmdsvr.SendCommandRequest\x1a\x1b.cmdsvr.SendCommandResponseB\x1cZ\x1aservice/cmd_service;cmdsvrb\x06proto3"
 
 var (
 	file_cmd_service_proto_rawDescOnce sync.Once
@@ -187,12 +187,12 @@ func file_cmd_service_proto_rawDescGZIP() []byte {
 
 var file_cmd_service_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_cmd_service_proto_goTypes = []any{
-	(*SendCommandRequest)(nil),  // 0: cloudplatform.SendCommandRequest
-	(*SendCommandResponse)(nil), // 1: cloudplatform.SendCommandResponse
+	(*SendCommandRequest)(nil),  // 0: cmdsvr.SendCommandRequest
+	(*SendCommandResponse)(nil), // 1: cmdsvr.SendCommandResponse
 }
 var file_cmd_service_proto_depIdxs = []int32{
-	0, // 0: cloudplatform.CloudPlatformService.SendCommand:input_type -> cloudplatform.SendCommandRequest
-	1, // 1: cloudplatform.CloudPlatformService.SendCommand:output_type -> cloudplatform.SendCommandResponse
+	0, // 0: cmdsvr.CloudPlatformService.SendCommand:input_type -> cmdsvr.SendCommandRequest
+	1, // 1: cmdsvr.CloudPlatformService.SendCommand:output_type -> cmdsvr.SendCommandResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
