@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package basicquery;
+
+option go_package = "service//basic;basicquery";
+
+service UserAndDeviceQueryService {
+  // 按设备 ID 或 SN 与手机号查询设备绑定信息及设备别名。
+  rpc QueryDeviceBindInfo(QueryDeviceBindInfoRequest) returns (QueryDeviceBindInfoResponse);
+
+  // 按手机号查询用户基础信息。
+  rpc QueryUserBasicInfo(QueryUserBasicInfoRequest) returns (QueryUserBasicInfoResponse);
+}
+
+message QueryDeviceBindInfoRequest {
+  // 设备 ID，与 deviceSn 至少填写一个。
+  string deviceId = 1;
+
+  // 设备 SN，与 deviceId 至少填写一个。
+  string deviceSn = 2;
+
+  // 用户手机号。
+  string phone = 3;
+}
+
+message QueryDeviceBindInfoResponse {
+  // 状态码：0 成功，其他失败。
+  int32 status = 1;
+
+  // 结果说明。
+  string message = 2;
+
+  // 设备绑定信息。
+  DeviceBindInfo data = 3;
+}
+
+message DeviceBindInfo {
+  // 绑定记录 ID。
+  uint64 id = 1;
+
+  // 用户 ID。
+  string userId = 2;
+
+  // 用户手机号。
+  string phone = 3;
+
+  // 设备 SN。
+  string deviceSn = 4;
+
+  // 设备 ID。
+  string deviceId = 5;
+
+  // 设备别名。
+  string deviceAlias = 6;
+
+  // 绑定角色。
+  int32 role = 7;
+
+  // 绑定状态。
+  int32 bindStatus = 8;
+
+  // 绑定时间戳，毫秒。
+  int64 bindTime = 9;
+
+  // 解绑时间戳，毫秒。
+  int64 unbindTime = 10;
+}
+
+message QueryUserBasicInfoRequest {
+  // 用户手机号。
+  string phone = 1;
+}
+
+message QueryUserBasicInfoResponse {
+  // 状态码：0 成功，其他失败。
+  int32 status = 1;
+
+  // 结果说明。
+  string message = 2;
+
+  // 用户基础信息。
+  UserBasicInfo data = 3;
+}
+
+message UserBasicInfo {
+  // 用户记录 ID。
+  uint64 id = 1;
+
+  // 用户 ID。
+  string userId = 2;
+
+  // 用户手机号。
+  string phone = 3;
+
+  // 昵称。
+  string nickname = 4;
+
+  // 姓名。
+  string name = 5;
+
+  // 头像地址。
+  string avatarUrl = 6;
+
+  // 用户标签。
+  string userTag = 7;
+
+  // 项目名称。
+  string projectName = 8;
+
+  // 邮箱。
+  string email = 9;
+
+  // 性别。
+  int32 gender = 10;
+
+  // 关注权限。
+  int32 followPermission = 11;
+
+  // 用户状态。
+  int32 status = 12;
+}

@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package taskcall;
+
+option go_package = "service//tasks;taskcall";
+
+service TaskCallService {
+  // 提供被定时任务调用的方法，在其他服务中通过定时任务调用对应逻辑。
+  rpc CallTask(CallTaskRequest) returns (CallTaskResponse);
+}
+
+message CallTaskRequest {
+  // 任务名称，用于标识需要执行的任务逻辑。
+  string taskName = 1;
+
+  // JSON 字符串参数，由具体任务按约定解析。
+  string params = 2;
+}
+
+message CallTaskResponse {
+  // 状态码：0 成功，其他失败。
+  int32 status = 1;
+
+  // 结果说明。
+  string message = 2;
+}
