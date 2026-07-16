@@ -20,9 +20,12 @@ import (
 type traceIDContextKey string
 
 const (
-	traceIDKey    traceIDContextKey = "trace_id"
-	traceIDField                    = "trace_id"
-	traceIDHeader                   = "x-trace-id"
+	traceIDKey traceIDContextKey = "trace_id"
+)
+
+const (
+	traceIDField  = "trace_id"
+	traceIDHeader = "x-trace-id"
 
 	// gRPC server default enforcement: MinTime=5m, PermitWithoutStream=false.
 	// Avoid idle pings and keep interval conservative to prevent ENHANCE_YOUR_CALM / too_many_pings.
@@ -50,13 +53,17 @@ type GrpcCallParam struct {
 
 // SelectGrpcAddr picks one healthy instance address via a reusable naming client.
 func SelectGrpcAddr(namingClient naming_client.INamingClient, serviceName, groupName, clusterName string) (string, error) {
-	return selectGrpcAddrFromNacos(namingClient, serviceName, groupName, clusterName)
+	addrs, err := selectGrpcAddrsFromNacos(namingClient, serviceName, groupName, clusterName)
+	if err != nil {
+		return "", err
+	}
+	return addrs[0], nil
 }
 
-// selectGrpcAddrFromNacos picks one healthy instance address via a reusable naming client.
-func selectGrpcAddrFromNacos(namingClient naming_client.INamingClient, serviceName, groupName, clusterName string) (string, error) {
+// selectGrpcAddrsFromNacos returns all healthy instance addresses via a reusable naming client.
+func selectGrpcAddrsFromNacos(namingClient naming_client.INamingClient, serviceName, groupName, clusterName string) ([]string, error) {
 	if namingClient == nil {
-		return "", fmt.Errorf("nacos naming client is nil")
+		return nil, fmt.Errorf("nacos naming client is nil")
 	}
 	if groupName == "" {
 		groupName = DefaultNacosGroup
@@ -66,16 +73,25 @@ func selectGrpcAddrFromNacos(namingClient naming_client.INamingClient, serviceNa
 		clusters = []string{clusterName}
 	}
 
-	instance, err := namingClient.SelectOneHealthyInstance(vo.SelectOneHealthInstanceParam{
+	instances, err := namingClient.SelectInstances(vo.SelectInstancesParam{
 		ServiceName: serviceName,
 		GroupName:   groupName,
 		Clusters:    clusters,
+		HealthyOnly: true,
 	})
 	if err != nil {
-		return "", fmt.Errorf("nacos discover service=%s group=%s failed: %w", serviceName, groupName, err)
+		return nil, fmt.Errorf("nacos discover service=%s group=%s failed: %w", serviceName, groupName, err)
+	}
+	if len(instances) == 0 {
+		return nil, fmt.Errorf("nacos discover service=%s group=%s returned no healthy instances", serviceName, groupName)
 	}
 
-	return fmt.Sprintf("%s:%d", instance.Ip, instance.Port), nil
+	addrs := make([]string, 0, len(instances))
+	for _, instance := range instances {
+		addrs = append(addrs, fmt.Sprintf("%s:%d", instance.Ip, instance.Port))
+	}
+
+	return addrs, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -279,10 +295,7 @@ func (p *NacosGrpcClient) pickHealthyConn() *grpc.ClientConn {
 }
 
 func (p *NacosGrpcClient) dialConn(ctx context.Context) (*grpc.ClientConn, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	addr, err := selectGrpcAddrFromNacos(p.namingClient, p.serviceName, p.groupName, p.clusterName)
+	addrs, err := selectGrpcAddrsFromNacos(p.namingClient, p.serviceName, p.groupName, p.clusterName)
 	logCtx := buildLogCtxWithTrace(ctx, logrus.Fields{
 		"service": p.serviceName,
 	})
@@ -290,7 +303,31 @@ func (p *NacosGrpcClient) dialConn(ctx context.Context) (*grpc.ClientConn, error
 		logrus.WithFields(logCtx).Errorf("resolve grpc address failed: %v", err)
 		return nil, err
 	}
-	logCtx["addr"] = addr
+
+	var lastErr error
+	var lastAddr string
+	for _, addr := range addrs {
+		lastAddr = addr
+		attemptLogCtx := buildLogCtxWithTrace(ctx, logrus.Fields{
+			"service": p.serviceName,
+			"addr":    addr,
+		})
+
+		conn, err := p.dialAddr(ctx, addr, attemptLogCtx)
+		if err == nil {
+			return conn, nil
+		}
+
+		lastErr = err
+		logrus.WithFields(attemptLogCtx).Warnf("grpc instance connect failed, trying next instance: %v", err)
+	}
+
+	return nil, fmt.Errorf("all grpc instances connect failed service=%s instances=%d last_addr=%s: %w", p.serviceName, len(addrs), lastAddr, lastErr)
+}
+
+func (p *NacosGrpcClient) dialAddr(ctx context.Context, addr string, logCtx logrus.Fields) (*grpc.ClientConn, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
 
 	conn, err := grpc.NewClient(addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -301,8 +338,22 @@ func (p *NacosGrpcClient) dialConn(ctx context.Context) (*grpc.ClientConn, error
 		return nil, fmt.Errorf("grpc connect to %s (service=%s) failed: %w", addr, p.serviceName, err)
 	}
 
-	logrus.WithFields(logCtx).Info("grpc connection dialed (lazy connection)")
-	return conn, nil
+	conn.Connect()
+	for {
+		state := conn.GetState()
+		if state == connectivity.Ready {
+			logrus.WithFields(logCtx).Info("grpc connection ready")
+			return conn, nil
+		}
+		if state == connectivity.Shutdown {
+			_ = conn.Close()
+			return nil, fmt.Errorf("grpc connection shutdown before ready addr=%s service=%s", addr, p.serviceName)
+		}
+		if !conn.WaitForStateChange(ctx, state) {
+			_ = conn.Close()
+			return nil, fmt.Errorf("grpc connect timeout addr=%s service=%s: %w", addr, p.serviceName, ctx.Err())
+		}
+	}
 }
 
 func injectTraceID(ctx context.Context) (context.Context, string) {
