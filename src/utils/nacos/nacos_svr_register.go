@@ -190,6 +190,8 @@ func newNacosNamingClient(nacosConf *PkgNacosConfig, namespaceID string) (naming
 	return client, nil
 }
 
+// ResolveRegisterIP resolves the IP address to register with Nacos.
+// Priority: explicit IP, CIDR match, interface name, default route, then first usable IPv4.
 func ResolveRegisterIP() (string, error) {
 	if ip := strings.TrimSpace(os.Getenv("NACOS_REGISTER_IP")); ip != "" {
 		parsed := net.ParseIP(ip)
@@ -199,30 +201,114 @@ func ResolveRegisterIP() (string, error) {
 		return ip, nil
 	}
 
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err == nil {
-		defer conn.Close()
-		if localAddr, ok := conn.LocalAddr().(*net.UDPAddr); ok && localAddr.IP != nil {
-			return localAddr.IP.String(), nil
+	if cidr := strings.TrimSpace(os.Getenv("NACOS_REGISTER_CIDR")); cidr != "" {
+		ip, err := resolveRegisterIPByCIDR(cidr)
+		if err != nil {
+			return "", err
+		}
+		return ip, nil
+	}
+
+	if ifaceName := strings.TrimSpace(os.Getenv("NACOS_REGISTER_INTERFACE")); ifaceName != "" {
+		ip, err := resolveRegisterIPByInterface(ifaceName)
+		if err != nil {
+			return "", err
+		}
+		return ip, nil
+	}
+
+	if ip, err := resolveDefaultRouteIP(); err == nil {
+		return ip, nil
+	}
+
+	return resolveFirstNonLoopbackIPv4()
+}
+
+// resolveRegisterIPByCIDR returns the first local IPv4 address contained in the given CIDR.
+func resolveRegisterIPByCIDR(cidr string) (string, error) {
+	_, ipNet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return "", fmt.Errorf("invalid NACOS_REGISTER_CIDR: %s", cidr)
+	}
+
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "", err
+	}
+	for _, addr := range addrs {
+		ip, ok := addrToUsableIPv4(addr)
+		if !ok {
+			continue
+		}
+		if ipNet.Contains(ip) {
+			return ip.String(), nil
 		}
 	}
 
+	return "", fmt.Errorf("no local ipv4 address found in NACOS_REGISTER_CIDR: %s", cidr)
+}
+
+// resolveRegisterIPByInterface returns the first usable IPv4 address on the named interface.
+func resolveRegisterIPByInterface(ifaceName string) (string, error) {
+	iface, err := net.InterfaceByName(ifaceName)
+	if err != nil {
+		return "", fmt.Errorf("NACOS_REGISTER_INTERFACE %s not found: %w", ifaceName, err)
+	}
+
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return "", err
+	}
+	for _, addr := range addrs {
+		ip, ok := addrToUsableIPv4(addr)
+		if ok {
+			return ip.String(), nil
+		}
+	}
+
+	return "", fmt.Errorf("no usable ipv4 address found on NACOS_REGISTER_INTERFACE: %s", ifaceName)
+}
+
+// resolveDefaultRouteIP returns the local IPv4 selected by the system default route.
+func resolveDefaultRouteIP() (string, error) {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+	if localAddr, ok := conn.LocalAddr().(*net.UDPAddr); ok && localAddr.IP != nil {
+		if ipv4 := localAddr.IP.To4(); ipv4 != nil && !ipv4.IsLoopback() && !ipv4.IsLinkLocalUnicast() {
+			return ipv4.String(), nil
+		}
+	}
+	return "", fmt.Errorf("default route did not return a usable ipv4 address")
+}
+
+// resolveFirstNonLoopbackIPv4 returns the first usable local IPv4 as a final fallback.
+func resolveFirstNonLoopbackIPv4() (string, error) {
 	addrs, ifErr := net.InterfaceAddrs()
 	if ifErr != nil {
 		return "", ifErr
 	}
 	for _, addr := range addrs {
-		ipNet, ok := addr.(*net.IPNet)
-		if !ok || ipNet.IP == nil {
-			continue
-		}
-		if ipNet.IP.IsLoopback() || ipNet.IP.IsLinkLocalUnicast() {
-			continue
-		}
-		if ipv4 := ipNet.IP.To4(); ipv4 != nil {
-			return ipv4.String(), nil
+		ip, ok := addrToUsableIPv4(addr)
+		if ok {
+			return ip.String(), nil
 		}
 	}
 
 	return "", fmt.Errorf("no non-loopback ipv4 address found")
+}
+
+// addrToUsableIPv4 extracts a non-loopback, non-link-local IPv4 address.
+func addrToUsableIPv4(addr net.Addr) (net.IP, bool) {
+	ipNet, ok := addr.(*net.IPNet)
+	if !ok || ipNet.IP == nil {
+		return nil, false
+	}
+	ipv4 := ipNet.IP.To4()
+	if ipv4 == nil || ipv4.IsLoopback() || ipv4.IsLinkLocalUnicast() {
+		return nil, false
+	}
+	return ipv4, true
 }
