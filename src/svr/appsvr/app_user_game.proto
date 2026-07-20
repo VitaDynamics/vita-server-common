@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+package usergame;
+
+option go_package = "service//usergame;usergame";
+
+service UserGameService {
+  // 查询用户游戏化等级与经验信息。
+  rpc GetUserGameExp(GetUserGameExpRequest) returns (GetUserGameExpResponse);
+
+  // 保存游戏页面动效展示状态。
+  rpc SaveGameAnimationStatus(SaveGameAnimationStatusRequest) returns (SaveGameAnimationStatusResponse);
+}
+
+message GetUserGameExpRequest {
+  // 用户 ID。
+  string userId = 1;
+
+  // 用户手机号。
+  string phone = 2;
+
+  // 设备 SN。
+  string sn = 3;
+}
+
+message GetUserGameExpResponse {
+  // 状态码：0 成功，其他失败。
+  int32 status = 1;
+
+  // 结果说明。
+  string message = 2;
+
+  // 用户游戏化等级信息。
+  UserGameExpInfo data = 3;
+}
+
+message UserGameExpInfo {
+  // 等级名称，如 Lv1。
+  string levelName = 1;
+
+  // 等级 ID。
+  int32 levelId = 2;
+
+  // 累计到当前的用户总经验值。
+  int32 curExp = 3;
+
+  // 到下一个等级还需要的经验值。
+  int32 expLeftToNext = 4;
+
+  // 当前等级总经验值。
+  int32 curLevelTotalExp = 5;
+
+  // 当下一级有未开放权益时的提示文案。
+  repeated string nextPrivilegeText = 6;
+
+  // 页面展示的提示信息（经验与里程换算说明）。
+  ContentInfo tipInfo = 7;
+
+  // 当前等级权益列表。
+  repeated UserGameExpPrivilege privileges = 8;
+
+  // 页面动效中展示的文案。
+  ContentInfo levelPageText = 9;
+
+  // 是否需要展示页面动效。
+  bool showPageAnimation = 10;
+}
+
+message ContentInfo {
+  // 标题。
+  string title = 1;
+
+  // 内容。
+  string content = 2;
+}
+
+message UserGameExpPrivilege {
+  // 权益类型。
+  string type = 1;
+
+  // 权益描述。
+  string desc = 2;
+
+  // 权益值。
+  string value = 3;
+}
+
+message SaveGameAnimationStatusRequest {
+  // 用户 ID。
+  string userId = 1;
+
+  // 设备 SN。
+  string sn = 2;
+
+  // 等级 ID。
+  int32 levelId = 3;
+
+  // 平台类型。
+  int32 platformType = 4;
+
+  // App 版本号。
+  string appVersion = 5;
+}
+
+message SaveGameAnimationStatusResponse {
+  // 状态码：0 成功，其他失败。
+  int32 status = 1;
+
+  // 结果说明。
+  string message = 2;
+}
