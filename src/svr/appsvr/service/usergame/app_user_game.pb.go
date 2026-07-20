@@ -401,7 +401,9 @@ type SaveGameAnimationStatusRequest struct {
 	// 平台类型。
 	PlatformType int32 `protobuf:"varint,4,opt,name=platformType,proto3" json:"platformType,omitempty"`
 	// App 版本号。
-	AppVersion    string `protobuf:"bytes,5,opt,name=appVersion,proto3" json:"appVersion,omitempty"`
+	AppVersion string `protobuf:"bytes,5,opt,name=appVersion,proto3" json:"appVersion,omitempty"`
+	// App 版本号。
+	Phone         string `protobuf:"bytes,6,opt,name=phone,proto3" json:"phone,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -467,6 +469,13 @@ func (x *SaveGameAnimationStatusRequest) GetPlatformType() int32 {
 func (x *SaveGameAnimationStatusRequest) GetAppVersion() string {
 	if x != nil {
 		return x.AppVersion
+	}
+	return ""
+}
+
+func (x *SaveGameAnimationStatusRequest) GetPhone() string {
+	if x != nil {
+		return x.Phone
 	}
 	return ""
 }
@@ -558,7 +567,7 @@ const file_app_user_game_proto_rawDesc = "" +
 	"\x14UserGameExpPrivilege\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x12\n" +
 	"\x04desc\x18\x02 \x01(\tR\x04desc\x12\x14\n" +
-	"\x05value\x18\x03 \x01(\tR\x05value\"\xa6\x01\n" +
+	"\x05value\x18\x03 \x01(\tR\x05value\"\xbc\x01\n" +
 	"\x1eSaveGameAnimationStatusRequest\x12\x16\n" +
 	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x0e\n" +
 	"\x02sn\x18\x02 \x01(\tR\x02sn\x12\x18\n" +
@@ -566,7 +575,8 @@ const file_app_user_game_proto_rawDesc = "" +
 	"\fplatformType\x18\x04 \x01(\x05R\fplatformType\x12\x1e\n" +
 	"\n" +
 	"appVersion\x18\x05 \x01(\tR\n" +
-	"appVersion\"S\n" +
+	"appVersion\x12\x14\n" +
+	"\x05phone\x18\x06 \x01(\tR\x05phone\"S\n" +
 	"\x1fSaveGameAnimationStatusResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\x05R\x06status\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage2\xd6\x01\n" +
