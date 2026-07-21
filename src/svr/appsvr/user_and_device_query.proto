@@ -10,6 +10,9 @@ service UserAndDeviceQueryService {
 
   // 按手机号查询用户基础信息。
   rpc QueryUserBasicInfo(QueryUserBasicInfoRequest) returns (QueryUserBasicInfoResponse);
+
+  // 按手机号与设备 SN 查询设备成长监控数据（对接 GetGrowthSummary）。
+  rpc QueryDeviceGrowthSummary(QueryDeviceGrowthSummaryRequest) returns (QueryDeviceGrowthSummaryResponse);
 }
 
 message QueryDeviceBindInfoRequest {
@@ -118,4 +121,48 @@ message UserBasicInfo {
 
   // 用户状态。
   int32 status = 12;
+}
+
+message QueryDeviceGrowthSummaryRequest {
+  // 用户手机号。
+  string phone = 1;
+
+  // 设备 SN。
+  string sn = 2;
+}
+
+message QueryDeviceGrowthSummaryResponse {
+  // 状态码：0 成功，其他失败。
+  int32 status = 1;
+
+  // 结果说明。
+  string message = 2;
+
+  // 设备成长监控数据。
+  DeviceGrowthSummary data = 3;
+}
+
+message DeviceGrowthSummary {
+  // 设备 SN。
+  string sn = 1;
+
+  // 成长指标列表（duration / duration_str / mileage / interactions）。
+  repeated DeviceGrowthSummaryItem info = 2;
+}
+
+message DeviceGrowthSummaryItem {
+  // 指标名称。
+  string name = 1;
+
+  // 数值型累计值（duration / mileage / interactions）。
+  double totalNumber = 2;
+
+  // 数值型当日值（duration / mileage / interactions）。
+  double todayNumber = 3;
+
+  // 文本型累计值（duration_str）。
+  string totalText = 4;
+
+  // 文本型当日值（duration_str）。
+  string todayText = 5;
 }

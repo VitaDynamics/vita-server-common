@@ -525,6 +525,258 @@ func (x *UserBasicInfo) GetStatus() int32 {
 	return 0
 }
 
+type QueryDeviceGrowthSummaryRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 用户手机号。
+	Phone string `protobuf:"bytes,1,opt,name=phone,proto3" json:"phone,omitempty"`
+	// 设备 SN。
+	Sn            string `protobuf:"bytes,2,opt,name=sn,proto3" json:"sn,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QueryDeviceGrowthSummaryRequest) Reset() {
+	*x = QueryDeviceGrowthSummaryRequest{}
+	mi := &file_user_and_device_query_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryDeviceGrowthSummaryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryDeviceGrowthSummaryRequest) ProtoMessage() {}
+
+func (x *QueryDeviceGrowthSummaryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_and_device_query_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryDeviceGrowthSummaryRequest.ProtoReflect.Descriptor instead.
+func (*QueryDeviceGrowthSummaryRequest) Descriptor() ([]byte, []int) {
+	return file_user_and_device_query_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *QueryDeviceGrowthSummaryRequest) GetPhone() string {
+	if x != nil {
+		return x.Phone
+	}
+	return ""
+}
+
+func (x *QueryDeviceGrowthSummaryRequest) GetSn() string {
+	if x != nil {
+		return x.Sn
+	}
+	return ""
+}
+
+type QueryDeviceGrowthSummaryResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 状态码：0 成功，其他失败。
+	Status int32 `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
+	// 结果说明。
+	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	// 设备成长监控数据。
+	Data          *DeviceGrowthSummary `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QueryDeviceGrowthSummaryResponse) Reset() {
+	*x = QueryDeviceGrowthSummaryResponse{}
+	mi := &file_user_and_device_query_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueryDeviceGrowthSummaryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryDeviceGrowthSummaryResponse) ProtoMessage() {}
+
+func (x *QueryDeviceGrowthSummaryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_user_and_device_query_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryDeviceGrowthSummaryResponse.ProtoReflect.Descriptor instead.
+func (*QueryDeviceGrowthSummaryResponse) Descriptor() ([]byte, []int) {
+	return file_user_and_device_query_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *QueryDeviceGrowthSummaryResponse) GetStatus() int32 {
+	if x != nil {
+		return x.Status
+	}
+	return 0
+}
+
+func (x *QueryDeviceGrowthSummaryResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *QueryDeviceGrowthSummaryResponse) GetData() *DeviceGrowthSummary {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type DeviceGrowthSummary struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 设备 SN。
+	Sn string `protobuf:"bytes,1,opt,name=sn,proto3" json:"sn,omitempty"`
+	// 成长指标列表（duration / duration_str / mileage / interactions）。
+	Info          []*DeviceGrowthSummaryItem `protobuf:"bytes,2,rep,name=info,proto3" json:"info,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeviceGrowthSummary) Reset() {
+	*x = DeviceGrowthSummary{}
+	mi := &file_user_and_device_query_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeviceGrowthSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceGrowthSummary) ProtoMessage() {}
+
+func (x *DeviceGrowthSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_user_and_device_query_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceGrowthSummary.ProtoReflect.Descriptor instead.
+func (*DeviceGrowthSummary) Descriptor() ([]byte, []int) {
+	return file_user_and_device_query_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *DeviceGrowthSummary) GetSn() string {
+	if x != nil {
+		return x.Sn
+	}
+	return ""
+}
+
+func (x *DeviceGrowthSummary) GetInfo() []*DeviceGrowthSummaryItem {
+	if x != nil {
+		return x.Info
+	}
+	return nil
+}
+
+type DeviceGrowthSummaryItem struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 指标名称。
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// 数值型累计值（duration / mileage / interactions）。
+	TotalNumber float64 `protobuf:"fixed64,2,opt,name=totalNumber,proto3" json:"totalNumber,omitempty"`
+	// 数值型当日值（duration / mileage / interactions）。
+	TodayNumber float64 `protobuf:"fixed64,3,opt,name=todayNumber,proto3" json:"todayNumber,omitempty"`
+	// 文本型累计值（duration_str）。
+	TotalText string `protobuf:"bytes,4,opt,name=totalText,proto3" json:"totalText,omitempty"`
+	// 文本型当日值（duration_str）。
+	TodayText     string `protobuf:"bytes,5,opt,name=todayText,proto3" json:"todayText,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeviceGrowthSummaryItem) Reset() {
+	*x = DeviceGrowthSummaryItem{}
+	mi := &file_user_and_device_query_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeviceGrowthSummaryItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceGrowthSummaryItem) ProtoMessage() {}
+
+func (x *DeviceGrowthSummaryItem) ProtoReflect() protoreflect.Message {
+	mi := &file_user_and_device_query_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceGrowthSummaryItem.ProtoReflect.Descriptor instead.
+func (*DeviceGrowthSummaryItem) Descriptor() ([]byte, []int) {
+	return file_user_and_device_query_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *DeviceGrowthSummaryItem) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *DeviceGrowthSummaryItem) GetTotalNumber() float64 {
+	if x != nil {
+		return x.TotalNumber
+	}
+	return 0
+}
+
+func (x *DeviceGrowthSummaryItem) GetTodayNumber() float64 {
+	if x != nil {
+		return x.TodayNumber
+	}
+	return 0
+}
+
+func (x *DeviceGrowthSummaryItem) GetTotalText() string {
+	if x != nil {
+		return x.TotalText
+	}
+	return ""
+}
+
+func (x *DeviceGrowthSummaryItem) GetTodayText() string {
+	if x != nil {
+		return x.TodayText
+	}
+	return ""
+}
+
 var File_user_and_device_query_proto protoreflect.FileDescriptor
 
 const file_user_and_device_query_proto_rawDesc = "" +
@@ -574,10 +826,27 @@ const file_user_and_device_query_proto_rawDesc = "" +
 	"\x06gender\x18\n" +
 	" \x01(\x05R\x06gender\x12*\n" +
 	"\x10followPermission\x18\v \x01(\x05R\x10followPermission\x12\x16\n" +
-	"\x06status\x18\f \x01(\x05R\x06status2\xe8\x01\n" +
+	"\x06status\x18\f \x01(\x05R\x06status\"G\n" +
+	"\x1fQueryDeviceGrowthSummaryRequest\x12\x14\n" +
+	"\x05phone\x18\x01 \x01(\tR\x05phone\x12\x0e\n" +
+	"\x02sn\x18\x02 \x01(\tR\x02sn\"\x89\x01\n" +
+	" QueryDeviceGrowthSummaryResponse\x12\x16\n" +
+	"\x06status\x18\x01 \x01(\x05R\x06status\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x123\n" +
+	"\x04data\x18\x03 \x01(\v2\x1f.basicquery.DeviceGrowthSummaryR\x04data\"^\n" +
+	"\x13DeviceGrowthSummary\x12\x0e\n" +
+	"\x02sn\x18\x01 \x01(\tR\x02sn\x127\n" +
+	"\x04info\x18\x02 \x03(\v2#.basicquery.DeviceGrowthSummaryItemR\x04info\"\xad\x01\n" +
+	"\x17DeviceGrowthSummaryItem\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
+	"\vtotalNumber\x18\x02 \x01(\x01R\vtotalNumber\x12 \n" +
+	"\vtodayNumber\x18\x03 \x01(\x01R\vtodayNumber\x12\x1c\n" +
+	"\ttotalText\x18\x04 \x01(\tR\ttotalText\x12\x1c\n" +
+	"\ttodayText\x18\x05 \x01(\tR\ttodayText2\xdf\x02\n" +
 	"\x19UserAndDeviceQueryService\x12f\n" +
 	"\x13QueryDeviceBindInfo\x12&.basicquery.QueryDeviceBindInfoRequest\x1a'.basicquery.QueryDeviceBindInfoResponse\x12c\n" +
-	"\x12QueryUserBasicInfo\x12%.basicquery.QueryUserBasicInfoRequest\x1a&.basicquery.QueryUserBasicInfoResponseB\x1bZ\x19service//basic;basicqueryb\x06proto3"
+	"\x12QueryUserBasicInfo\x12%.basicquery.QueryUserBasicInfoRequest\x1a&.basicquery.QueryUserBasicInfoResponse\x12u\n" +
+	"\x18QueryDeviceGrowthSummary\x12+.basicquery.QueryDeviceGrowthSummaryRequest\x1a,.basicquery.QueryDeviceGrowthSummaryResponseB\x1bZ\x19service//basic;basicqueryb\x06proto3"
 
 var (
 	file_user_and_device_query_proto_rawDescOnce sync.Once
@@ -591,27 +860,35 @@ func file_user_and_device_query_proto_rawDescGZIP() []byte {
 	return file_user_and_device_query_proto_rawDescData
 }
 
-var file_user_and_device_query_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_user_and_device_query_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_user_and_device_query_proto_goTypes = []any{
-	(*QueryDeviceBindInfoRequest)(nil),  // 0: basicquery.QueryDeviceBindInfoRequest
-	(*QueryDeviceBindInfoResponse)(nil), // 1: basicquery.QueryDeviceBindInfoResponse
-	(*DeviceBindInfo)(nil),              // 2: basicquery.DeviceBindInfo
-	(*QueryUserBasicInfoRequest)(nil),   // 3: basicquery.QueryUserBasicInfoRequest
-	(*QueryUserBasicInfoResponse)(nil),  // 4: basicquery.QueryUserBasicInfoResponse
-	(*UserBasicInfo)(nil),               // 5: basicquery.UserBasicInfo
+	(*QueryDeviceBindInfoRequest)(nil),       // 0: basicquery.QueryDeviceBindInfoRequest
+	(*QueryDeviceBindInfoResponse)(nil),      // 1: basicquery.QueryDeviceBindInfoResponse
+	(*DeviceBindInfo)(nil),                   // 2: basicquery.DeviceBindInfo
+	(*QueryUserBasicInfoRequest)(nil),        // 3: basicquery.QueryUserBasicInfoRequest
+	(*QueryUserBasicInfoResponse)(nil),       // 4: basicquery.QueryUserBasicInfoResponse
+	(*UserBasicInfo)(nil),                    // 5: basicquery.UserBasicInfo
+	(*QueryDeviceGrowthSummaryRequest)(nil),  // 6: basicquery.QueryDeviceGrowthSummaryRequest
+	(*QueryDeviceGrowthSummaryResponse)(nil), // 7: basicquery.QueryDeviceGrowthSummaryResponse
+	(*DeviceGrowthSummary)(nil),              // 8: basicquery.DeviceGrowthSummary
+	(*DeviceGrowthSummaryItem)(nil),          // 9: basicquery.DeviceGrowthSummaryItem
 }
 var file_user_and_device_query_proto_depIdxs = []int32{
 	2, // 0: basicquery.QueryDeviceBindInfoResponse.data:type_name -> basicquery.DeviceBindInfo
 	5, // 1: basicquery.QueryUserBasicInfoResponse.data:type_name -> basicquery.UserBasicInfo
-	0, // 2: basicquery.UserAndDeviceQueryService.QueryDeviceBindInfo:input_type -> basicquery.QueryDeviceBindInfoRequest
-	3, // 3: basicquery.UserAndDeviceQueryService.QueryUserBasicInfo:input_type -> basicquery.QueryUserBasicInfoRequest
-	1, // 4: basicquery.UserAndDeviceQueryService.QueryDeviceBindInfo:output_type -> basicquery.QueryDeviceBindInfoResponse
-	4, // 5: basicquery.UserAndDeviceQueryService.QueryUserBasicInfo:output_type -> basicquery.QueryUserBasicInfoResponse
-	4, // [4:6] is the sub-list for method output_type
-	2, // [2:4] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	8, // 2: basicquery.QueryDeviceGrowthSummaryResponse.data:type_name -> basicquery.DeviceGrowthSummary
+	9, // 3: basicquery.DeviceGrowthSummary.info:type_name -> basicquery.DeviceGrowthSummaryItem
+	0, // 4: basicquery.UserAndDeviceQueryService.QueryDeviceBindInfo:input_type -> basicquery.QueryDeviceBindInfoRequest
+	3, // 5: basicquery.UserAndDeviceQueryService.QueryUserBasicInfo:input_type -> basicquery.QueryUserBasicInfoRequest
+	6, // 6: basicquery.UserAndDeviceQueryService.QueryDeviceGrowthSummary:input_type -> basicquery.QueryDeviceGrowthSummaryRequest
+	1, // 7: basicquery.UserAndDeviceQueryService.QueryDeviceBindInfo:output_type -> basicquery.QueryDeviceBindInfoResponse
+	4, // 8: basicquery.UserAndDeviceQueryService.QueryUserBasicInfo:output_type -> basicquery.QueryUserBasicInfoResponse
+	7, // 9: basicquery.UserAndDeviceQueryService.QueryDeviceGrowthSummary:output_type -> basicquery.QueryDeviceGrowthSummaryResponse
+	7, // [7:10] is the sub-list for method output_type
+	4, // [4:7] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_user_and_device_query_proto_init() }
@@ -625,7 +902,7 @@ func file_user_and_device_query_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_and_device_query_proto_rawDesc), len(file_user_and_device_query_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

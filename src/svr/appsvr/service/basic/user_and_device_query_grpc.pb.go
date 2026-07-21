@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserAndDeviceQueryService_QueryDeviceBindInfo_FullMethodName = "/basicquery.UserAndDeviceQueryService/QueryDeviceBindInfo"
-	UserAndDeviceQueryService_QueryUserBasicInfo_FullMethodName  = "/basicquery.UserAndDeviceQueryService/QueryUserBasicInfo"
+	UserAndDeviceQueryService_QueryDeviceBindInfo_FullMethodName      = "/basicquery.UserAndDeviceQueryService/QueryDeviceBindInfo"
+	UserAndDeviceQueryService_QueryUserBasicInfo_FullMethodName       = "/basicquery.UserAndDeviceQueryService/QueryUserBasicInfo"
+	UserAndDeviceQueryService_QueryDeviceGrowthSummary_FullMethodName = "/basicquery.UserAndDeviceQueryService/QueryDeviceGrowthSummary"
 )
 
 // UserAndDeviceQueryServiceClient is the client API for UserAndDeviceQueryService service.
@@ -31,6 +32,8 @@ type UserAndDeviceQueryServiceClient interface {
 	QueryDeviceBindInfo(ctx context.Context, in *QueryDeviceBindInfoRequest, opts ...grpc.CallOption) (*QueryDeviceBindInfoResponse, error)
 	// 按手机号查询用户基础信息。
 	QueryUserBasicInfo(ctx context.Context, in *QueryUserBasicInfoRequest, opts ...grpc.CallOption) (*QueryUserBasicInfoResponse, error)
+	// 按手机号与设备 SN 查询设备成长监控数据（对接 GetGrowthSummary）。
+	QueryDeviceGrowthSummary(ctx context.Context, in *QueryDeviceGrowthSummaryRequest, opts ...grpc.CallOption) (*QueryDeviceGrowthSummaryResponse, error)
 }
 
 type userAndDeviceQueryServiceClient struct {
@@ -61,6 +64,16 @@ func (c *userAndDeviceQueryServiceClient) QueryUserBasicInfo(ctx context.Context
 	return out, nil
 }
 
+func (c *userAndDeviceQueryServiceClient) QueryDeviceGrowthSummary(ctx context.Context, in *QueryDeviceGrowthSummaryRequest, opts ...grpc.CallOption) (*QueryDeviceGrowthSummaryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryDeviceGrowthSummaryResponse)
+	err := c.cc.Invoke(ctx, UserAndDeviceQueryService_QueryDeviceGrowthSummary_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserAndDeviceQueryServiceServer is the server API for UserAndDeviceQueryService service.
 // All implementations must embed UnimplementedUserAndDeviceQueryServiceServer
 // for forward compatibility.
@@ -69,6 +82,8 @@ type UserAndDeviceQueryServiceServer interface {
 	QueryDeviceBindInfo(context.Context, *QueryDeviceBindInfoRequest) (*QueryDeviceBindInfoResponse, error)
 	// 按手机号查询用户基础信息。
 	QueryUserBasicInfo(context.Context, *QueryUserBasicInfoRequest) (*QueryUserBasicInfoResponse, error)
+	// 按手机号与设备 SN 查询设备成长监控数据（对接 GetGrowthSummary）。
+	QueryDeviceGrowthSummary(context.Context, *QueryDeviceGrowthSummaryRequest) (*QueryDeviceGrowthSummaryResponse, error)
 	mustEmbedUnimplementedUserAndDeviceQueryServiceServer()
 }
 
@@ -84,6 +99,9 @@ func (UnimplementedUserAndDeviceQueryServiceServer) QueryDeviceBindInfo(context.
 }
 func (UnimplementedUserAndDeviceQueryServiceServer) QueryUserBasicInfo(context.Context, *QueryUserBasicInfoRequest) (*QueryUserBasicInfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method QueryUserBasicInfo not implemented")
+}
+func (UnimplementedUserAndDeviceQueryServiceServer) QueryDeviceGrowthSummary(context.Context, *QueryDeviceGrowthSummaryRequest) (*QueryDeviceGrowthSummaryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method QueryDeviceGrowthSummary not implemented")
 }
 func (UnimplementedUserAndDeviceQueryServiceServer) mustEmbedUnimplementedUserAndDeviceQueryServiceServer() {
 }
@@ -143,6 +161,24 @@ func _UserAndDeviceQueryService_QueryUserBasicInfo_Handler(srv interface{}, ctx 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserAndDeviceQueryService_QueryDeviceGrowthSummary_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDeviceGrowthSummaryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserAndDeviceQueryServiceServer).QueryDeviceGrowthSummary(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserAndDeviceQueryService_QueryDeviceGrowthSummary_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserAndDeviceQueryServiceServer).QueryDeviceGrowthSummary(ctx, req.(*QueryDeviceGrowthSummaryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserAndDeviceQueryService_ServiceDesc is the grpc.ServiceDesc for UserAndDeviceQueryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -157,6 +193,10 @@ var UserAndDeviceQueryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QueryUserBasicInfo",
 			Handler:    _UserAndDeviceQueryService_QueryUserBasicInfo_Handler,
+		},
+		{
+			MethodName: "QueryDeviceGrowthSummary",
+			Handler:    _UserAndDeviceQueryService_QueryDeviceGrowthSummary_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
