@@ -19,12 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DeviceService_GetDevicesBySnList_FullMethodName         = "/devicesvr.DeviceService/GetDevicesBySnList"
-	DeviceService_SearchDevicesByCondition_FullMethodName   = "/devicesvr.DeviceService/SearchDevicesByCondition"
-	DeviceService_GetDailyMetrics_FullMethodName            = "/devicesvr.DeviceService/GetDailyMetrics"
-	DeviceService_GetLatestMetricsBeforeDate_FullMethodName = "/devicesvr.DeviceService/GetLatestMetricsBeforeDate"
-	DeviceService_GetDailyMetricsByType_FullMethodName      = "/devicesvr.DeviceService/GetDailyMetricsByType"
-	DeviceService_BatchSaveMetrics_FullMethodName           = "/devicesvr.DeviceService/BatchSaveMetrics"
+	DeviceService_GetDevicesBySnList_FullMethodName       = "/devicesvr.DeviceService/GetDevicesBySnList"
+	DeviceService_SearchDevicesByCondition_FullMethodName = "/devicesvr.DeviceService/SearchDevicesByCondition"
 )
 
 // DeviceServiceClient is the client API for DeviceService service.
@@ -35,14 +31,6 @@ type DeviceServiceClient interface {
 	GetDevicesBySnList(ctx context.Context, in *GetDevicesBySnListRequest, opts ...grpc.CallOption) (*GetDevicesInfoListResponse, error)
 	// 根据 SN、名称、机器人类型查询设备信息
 	SearchDevicesByCondition(ctx context.Context, in *SearchDevicesRequest, opts ...grpc.CallOption) (*GetDevicesInfoListResponse, error)
-	// 查询指定设备在日期范围内的每日指标
-	GetDailyMetrics(ctx context.Context, in *GetDailyMetricsRequest, opts ...grpc.CallOption) (*GetDeviceMetricsListResponse, error)
-	// 查询指定设备和指标在某日期前最近一条累计指标
-	GetLatestMetricsBeforeDate(ctx context.Context, in *GetLatestMetricsBeforeDateRequest, opts ...grpc.CallOption) (*GetDeviceMetricsListResponse, error)
-	// 查询指定设备在日期范围内的指定类型指标
-	GetDailyMetricsByType(ctx context.Context, in *GetDailyMetricsByTypeRequest, opts ...grpc.CallOption) (*GetDeviceMetricsListResponse, error)
-	// 批量保存设备每日累计指标
-	BatchSaveMetrics(ctx context.Context, in *BatchSaveMetricsRequest, opts ...grpc.CallOption) (*BatchSaveMetricsResponse, error)
 }
 
 type deviceServiceClient struct {
@@ -73,46 +61,6 @@ func (c *deviceServiceClient) SearchDevicesByCondition(ctx context.Context, in *
 	return out, nil
 }
 
-func (c *deviceServiceClient) GetDailyMetrics(ctx context.Context, in *GetDailyMetricsRequest, opts ...grpc.CallOption) (*GetDeviceMetricsListResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetDeviceMetricsListResponse)
-	err := c.cc.Invoke(ctx, DeviceService_GetDailyMetrics_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *deviceServiceClient) GetLatestMetricsBeforeDate(ctx context.Context, in *GetLatestMetricsBeforeDateRequest, opts ...grpc.CallOption) (*GetDeviceMetricsListResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetDeviceMetricsListResponse)
-	err := c.cc.Invoke(ctx, DeviceService_GetLatestMetricsBeforeDate_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *deviceServiceClient) GetDailyMetricsByType(ctx context.Context, in *GetDailyMetricsByTypeRequest, opts ...grpc.CallOption) (*GetDeviceMetricsListResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetDeviceMetricsListResponse)
-	err := c.cc.Invoke(ctx, DeviceService_GetDailyMetricsByType_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *deviceServiceClient) BatchSaveMetrics(ctx context.Context, in *BatchSaveMetricsRequest, opts ...grpc.CallOption) (*BatchSaveMetricsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(BatchSaveMetricsResponse)
-	err := c.cc.Invoke(ctx, DeviceService_BatchSaveMetrics_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // DeviceServiceServer is the server API for DeviceService service.
 // All implementations must embed UnimplementedDeviceServiceServer
 // for forward compatibility.
@@ -121,14 +69,6 @@ type DeviceServiceServer interface {
 	GetDevicesBySnList(context.Context, *GetDevicesBySnListRequest) (*GetDevicesInfoListResponse, error)
 	// 根据 SN、名称、机器人类型查询设备信息
 	SearchDevicesByCondition(context.Context, *SearchDevicesRequest) (*GetDevicesInfoListResponse, error)
-	// 查询指定设备在日期范围内的每日指标
-	GetDailyMetrics(context.Context, *GetDailyMetricsRequest) (*GetDeviceMetricsListResponse, error)
-	// 查询指定设备和指标在某日期前最近一条累计指标
-	GetLatestMetricsBeforeDate(context.Context, *GetLatestMetricsBeforeDateRequest) (*GetDeviceMetricsListResponse, error)
-	// 查询指定设备在日期范围内的指定类型指标
-	GetDailyMetricsByType(context.Context, *GetDailyMetricsByTypeRequest) (*GetDeviceMetricsListResponse, error)
-	// 批量保存设备每日累计指标
-	BatchSaveMetrics(context.Context, *BatchSaveMetricsRequest) (*BatchSaveMetricsResponse, error)
 	mustEmbedUnimplementedDeviceServiceServer()
 }
 
@@ -144,18 +84,6 @@ func (UnimplementedDeviceServiceServer) GetDevicesBySnList(context.Context, *Get
 }
 func (UnimplementedDeviceServiceServer) SearchDevicesByCondition(context.Context, *SearchDevicesRequest) (*GetDevicesInfoListResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SearchDevicesByCondition not implemented")
-}
-func (UnimplementedDeviceServiceServer) GetDailyMetrics(context.Context, *GetDailyMetricsRequest) (*GetDeviceMetricsListResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetDailyMetrics not implemented")
-}
-func (UnimplementedDeviceServiceServer) GetLatestMetricsBeforeDate(context.Context, *GetLatestMetricsBeforeDateRequest) (*GetDeviceMetricsListResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetLatestMetricsBeforeDate not implemented")
-}
-func (UnimplementedDeviceServiceServer) GetDailyMetricsByType(context.Context, *GetDailyMetricsByTypeRequest) (*GetDeviceMetricsListResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetDailyMetricsByType not implemented")
-}
-func (UnimplementedDeviceServiceServer) BatchSaveMetrics(context.Context, *BatchSaveMetricsRequest) (*BatchSaveMetricsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method BatchSaveMetrics not implemented")
 }
 func (UnimplementedDeviceServiceServer) mustEmbedUnimplementedDeviceServiceServer() {}
 func (UnimplementedDeviceServiceServer) testEmbeddedByValue()                       {}
@@ -214,78 +142,6 @@ func _DeviceService_SearchDevicesByCondition_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DeviceService_GetDailyMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetDailyMetricsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DeviceServiceServer).GetDailyMetrics(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DeviceService_GetDailyMetrics_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeviceServiceServer).GetDailyMetrics(ctx, req.(*GetDailyMetricsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DeviceService_GetLatestMetricsBeforeDate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetLatestMetricsBeforeDateRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DeviceServiceServer).GetLatestMetricsBeforeDate(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DeviceService_GetLatestMetricsBeforeDate_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeviceServiceServer).GetLatestMetricsBeforeDate(ctx, req.(*GetLatestMetricsBeforeDateRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DeviceService_GetDailyMetricsByType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetDailyMetricsByTypeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DeviceServiceServer).GetDailyMetricsByType(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DeviceService_GetDailyMetricsByType_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeviceServiceServer).GetDailyMetricsByType(ctx, req.(*GetDailyMetricsByTypeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DeviceService_BatchSaveMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BatchSaveMetricsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DeviceServiceServer).BatchSaveMetrics(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DeviceService_BatchSaveMetrics_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DeviceServiceServer).BatchSaveMetrics(ctx, req.(*BatchSaveMetricsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // DeviceService_ServiceDesc is the grpc.ServiceDesc for DeviceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -300,22 +156,6 @@ var DeviceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SearchDevicesByCondition",
 			Handler:    _DeviceService_SearchDevicesByCondition_Handler,
-		},
-		{
-			MethodName: "GetDailyMetrics",
-			Handler:    _DeviceService_GetDailyMetrics_Handler,
-		},
-		{
-			MethodName: "GetLatestMetricsBeforeDate",
-			Handler:    _DeviceService_GetLatestMetricsBeforeDate_Handler,
-		},
-		{
-			MethodName: "GetDailyMetricsByType",
-			Handler:    _DeviceService_GetDailyMetricsByType_Handler,
-		},
-		{
-			MethodName: "BatchSaveMetrics",
-			Handler:    _DeviceService_BatchSaveMetrics_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -22,6 +22,65 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// QueryType 设备查询类型
+type QueryType int32
+
+const (
+	QueryType_QUERY_TYPE_UNSPECIFIED    QueryType = 0 // 未指定（按条件组合查询）
+	QueryType_QUERY_TYPE_BY_SN          QueryType = 1 // 按设备序列号查询
+	QueryType_QUERY_TYPE_BY_NAME        QueryType = 2 // 按设备名称查询
+	QueryType_QUERY_TYPE_BY_DEVICE_TYPE QueryType = 3 // 按设备类型查询
+	QueryType_QUERY_TYPE_BY_DEVICE_ID   QueryType = 4 // 按设备 ID 查询
+	QueryType_QUERY_TYPE_BY_PIDS        QueryType = 5 // 按产品 ID 列表查询
+)
+
+// Enum value maps for QueryType.
+var (
+	QueryType_name = map[int32]string{
+		0: "QUERY_TYPE_UNSPECIFIED",
+		1: "QUERY_TYPE_BY_SN",
+		2: "QUERY_TYPE_BY_NAME",
+		3: "QUERY_TYPE_BY_DEVICE_TYPE",
+		4: "QUERY_TYPE_BY_DEVICE_ID",
+		5: "QUERY_TYPE_BY_PIDS",
+	}
+	QueryType_value = map[string]int32{
+		"QUERY_TYPE_UNSPECIFIED":    0,
+		"QUERY_TYPE_BY_SN":          1,
+		"QUERY_TYPE_BY_NAME":        2,
+		"QUERY_TYPE_BY_DEVICE_TYPE": 3,
+		"QUERY_TYPE_BY_DEVICE_ID":   4,
+		"QUERY_TYPE_BY_PIDS":        5,
+	}
+)
+
+func (x QueryType) Enum() *QueryType {
+	p := new(QueryType)
+	*p = x
+	return p
+}
+
+func (x QueryType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (QueryType) Descriptor() protoreflect.EnumDescriptor {
+	return file_device_proto_enumTypes[0].Descriptor()
+}
+
+func (QueryType) Type() protoreflect.EnumType {
+	return &file_device_proto_enumTypes[0]
+}
+
+func (x QueryType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use QueryType.Descriptor instead.
+func (QueryType) EnumDescriptor() ([]byte, []int) {
+	return file_device_proto_rawDescGZIP(), []int{0}
+}
+
 // GetDevicesBySnListRequest 根据 SN 列表查询设备信息
 type GetDevicesBySnListRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -300,6 +359,9 @@ func (x *DeviceInfo) GetDeviceBelongingType() string {
 type GetDevicesInfoListResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Devices       []*DeviceInfo          `protobuf:"bytes,1,rep,name=devices,proto3" json:"devices,omitempty"`
+	Total         int64                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`       // 总设备数
+	Page          int64                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`         // 页码
+	PageSize      int64                  `protobuf:"varint,4,opt,name=pageSize,proto3" json:"pageSize,omitempty"` // 每页设备数
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -341,13 +403,36 @@ func (x *GetDevicesInfoListResponse) GetDevices() []*DeviceInfo {
 	return nil
 }
 
+func (x *GetDevicesInfoListResponse) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *GetDevicesInfoListResponse) GetPage() int64 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *GetDevicesInfoListResponse) GetPageSize() int64 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
 // SearchDevicesRequest 根据 SN、名称、机器人类型查询设备信息（条件可选，支持组合查询）
 type SearchDevicesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SnNumber      string                 `protobuf:"bytes,1,opt,name=snNumber,proto3" json:"snNumber,omitempty"`     // 设备序列号（精确匹配，空则忽略）
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`             // 设备名称（模糊匹配，空则忽略）
-	DeviceType    string                 `protobuf:"bytes,3,opt,name=deviceType,proto3" json:"deviceType,omitempty"` // 机器人类型/设备类型（精确匹配，空则忽略）
-	DeviceId      string                 `protobuf:"bytes,4,opt,name=deviceId,proto3" json:"deviceId,omitempty"`     //设备id
+	SnNumber      string                 `protobuf:"bytes,1,opt,name=snNumber,proto3" json:"snNumber,omitempty"`                             // 设备序列号（精确匹配，空则忽略）
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                                     // 设备名称（模糊匹配，空则忽略）
+	DeviceType    string                 `protobuf:"bytes,3,opt,name=deviceType,proto3" json:"deviceType,omitempty"`                         // 机器人类型/设备类型（精确匹配，空则忽略）
+	DeviceId      string                 `protobuf:"bytes,4,opt,name=deviceId,proto3" json:"deviceId,omitempty"`                             //设备id
+	Pid           []string               `protobuf:"bytes,5,rep,name=pid,proto3" json:"pid,omitempty"`                                       //产品id
+	QueryType     QueryType              `protobuf:"varint,6,opt,name=queryType,proto3,enum=devicesvr.QueryType" json:"queryType,omitempty"` // 查询类型
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -410,423 +495,18 @@ func (x *SearchDevicesRequest) GetDeviceId() string {
 	return ""
 }
 
-// DeviceMetricDaily 设备每日累计指标
-type DeviceMetricDaily struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=createTime,proto3" json:"createTime,omitempty"`
-	UpdateTime    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=updateTime,proto3" json:"updateTime,omitempty"`
-	DeviceId      string                 `protobuf:"bytes,4,opt,name=deviceId,proto3" json:"deviceId,omitempty"`         // device id
-	SnNumber      string                 `protobuf:"bytes,5,opt,name=snNumber,proto3" json:"snNumber,omitempty"`         // device sn number
-	MetricType    string                 `protobuf:"bytes,6,opt,name=metricType,proto3" json:"metricType,omitempty"`     // metric type
-	StatDate      *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=statDate,proto3" json:"statDate,omitempty"`         // stat date
-	MetricValue   float64                `protobuf:"fixed64,8,opt,name=metricValue,proto3" json:"metricValue,omitempty"` // cumulative metric value
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DeviceMetricDaily) Reset() {
-	*x = DeviceMetricDaily{}
-	mi := &file_device_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DeviceMetricDaily) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeviceMetricDaily) ProtoMessage() {}
-
-func (x *DeviceMetricDaily) ProtoReflect() protoreflect.Message {
-	mi := &file_device_proto_msgTypes[4]
+func (x *SearchDevicesRequest) GetPid() []string {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeviceMetricDaily.ProtoReflect.Descriptor instead.
-func (*DeviceMetricDaily) Descriptor() ([]byte, []int) {
-	return file_device_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *DeviceMetricDaily) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *DeviceMetricDaily) GetCreateTime() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreateTime
+		return x.Pid
 	}
 	return nil
 }
 
-func (x *DeviceMetricDaily) GetUpdateTime() *timestamppb.Timestamp {
+func (x *SearchDevicesRequest) GetQueryType() QueryType {
 	if x != nil {
-		return x.UpdateTime
+		return x.QueryType
 	}
-	return nil
-}
-
-func (x *DeviceMetricDaily) GetDeviceId() string {
-	if x != nil {
-		return x.DeviceId
-	}
-	return ""
-}
-
-func (x *DeviceMetricDaily) GetSnNumber() string {
-	if x != nil {
-		return x.SnNumber
-	}
-	return ""
-}
-
-func (x *DeviceMetricDaily) GetMetricType() string {
-	if x != nil {
-		return x.MetricType
-	}
-	return ""
-}
-
-func (x *DeviceMetricDaily) GetStatDate() *timestamppb.Timestamp {
-	if x != nil {
-		return x.StatDate
-	}
-	return nil
-}
-
-func (x *DeviceMetricDaily) GetMetricValue() float64 {
-	if x != nil {
-		return x.MetricValue
-	}
-	return 0
-}
-
-// GetDailyMetricsRequest 查询指定设备在日期范围内的每日指标
-type GetDailyMetricsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SnList        []string               `protobuf:"bytes,1,rep,name=snList,proto3" json:"snList,omitempty"`
-	StartDate     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=startDate,proto3" json:"startDate,omitempty"`
-	EndDate       *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=endDate,proto3" json:"endDate,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetDailyMetricsRequest) Reset() {
-	*x = GetDailyMetricsRequest{}
-	mi := &file_device_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetDailyMetricsRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetDailyMetricsRequest) ProtoMessage() {}
-
-func (x *GetDailyMetricsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_device_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetDailyMetricsRequest.ProtoReflect.Descriptor instead.
-func (*GetDailyMetricsRequest) Descriptor() ([]byte, []int) {
-	return file_device_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *GetDailyMetricsRequest) GetSnList() []string {
-	if x != nil {
-		return x.SnList
-	}
-	return nil
-}
-
-func (x *GetDailyMetricsRequest) GetStartDate() *timestamppb.Timestamp {
-	if x != nil {
-		return x.StartDate
-	}
-	return nil
-}
-
-func (x *GetDailyMetricsRequest) GetEndDate() *timestamppb.Timestamp {
-	if x != nil {
-		return x.EndDate
-	}
-	return nil
-}
-
-// GetLatestMetricsBeforeDateRequest 查询指定设备和指标在某日期前最近一条累计指标
-type GetLatestMetricsBeforeDateRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DeviceSns     []string               `protobuf:"bytes,1,rep,name=deviceSns,proto3" json:"deviceSns,omitempty"`
-	BeforeDate    *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=beforeDate,proto3" json:"beforeDate,omitempty"`
-	MetricTypes   []string               `protobuf:"bytes,3,rep,name=metricTypes,proto3" json:"metricTypes,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetLatestMetricsBeforeDateRequest) Reset() {
-	*x = GetLatestMetricsBeforeDateRequest{}
-	mi := &file_device_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetLatestMetricsBeforeDateRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetLatestMetricsBeforeDateRequest) ProtoMessage() {}
-
-func (x *GetLatestMetricsBeforeDateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_device_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetLatestMetricsBeforeDateRequest.ProtoReflect.Descriptor instead.
-func (*GetLatestMetricsBeforeDateRequest) Descriptor() ([]byte, []int) {
-	return file_device_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *GetLatestMetricsBeforeDateRequest) GetDeviceSns() []string {
-	if x != nil {
-		return x.DeviceSns
-	}
-	return nil
-}
-
-func (x *GetLatestMetricsBeforeDateRequest) GetBeforeDate() *timestamppb.Timestamp {
-	if x != nil {
-		return x.BeforeDate
-	}
-	return nil
-}
-
-func (x *GetLatestMetricsBeforeDateRequest) GetMetricTypes() []string {
-	if x != nil {
-		return x.MetricTypes
-	}
-	return nil
-}
-
-// GetDailyMetricsByTypeRequest 查询指定设备在日期范围内的指定类型指标
-type GetDailyMetricsByTypeRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DeviceSns     []string               `protobuf:"bytes,1,rep,name=deviceSns,proto3" json:"deviceSns,omitempty"`
-	StartDate     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=startDate,proto3" json:"startDate,omitempty"`
-	EndDate       *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=endDate,proto3" json:"endDate,omitempty"`
-	MetricType    string                 `protobuf:"bytes,4,opt,name=metricType,proto3" json:"metricType,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetDailyMetricsByTypeRequest) Reset() {
-	*x = GetDailyMetricsByTypeRequest{}
-	mi := &file_device_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetDailyMetricsByTypeRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetDailyMetricsByTypeRequest) ProtoMessage() {}
-
-func (x *GetDailyMetricsByTypeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_device_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetDailyMetricsByTypeRequest.ProtoReflect.Descriptor instead.
-func (*GetDailyMetricsByTypeRequest) Descriptor() ([]byte, []int) {
-	return file_device_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *GetDailyMetricsByTypeRequest) GetDeviceSns() []string {
-	if x != nil {
-		return x.DeviceSns
-	}
-	return nil
-}
-
-func (x *GetDailyMetricsByTypeRequest) GetStartDate() *timestamppb.Timestamp {
-	if x != nil {
-		return x.StartDate
-	}
-	return nil
-}
-
-func (x *GetDailyMetricsByTypeRequest) GetEndDate() *timestamppb.Timestamp {
-	if x != nil {
-		return x.EndDate
-	}
-	return nil
-}
-
-func (x *GetDailyMetricsByTypeRequest) GetMetricType() string {
-	if x != nil {
-		return x.MetricType
-	}
-	return ""
-}
-
-// GetDeviceMetricsListResponse 设备每日指标列表
-type GetDeviceMetricsListResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Metrics       []*DeviceMetricDaily   `protobuf:"bytes,1,rep,name=metrics,proto3" json:"metrics,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetDeviceMetricsListResponse) Reset() {
-	*x = GetDeviceMetricsListResponse{}
-	mi := &file_device_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetDeviceMetricsListResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetDeviceMetricsListResponse) ProtoMessage() {}
-
-func (x *GetDeviceMetricsListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_device_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetDeviceMetricsListResponse.ProtoReflect.Descriptor instead.
-func (*GetDeviceMetricsListResponse) Descriptor() ([]byte, []int) {
-	return file_device_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *GetDeviceMetricsListResponse) GetMetrics() []*DeviceMetricDaily {
-	if x != nil {
-		return x.Metrics
-	}
-	return nil
-}
-
-// BatchSaveMetricsRequest 批量保存设备每日累计指标
-type BatchSaveMetricsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Metrics       []*DeviceMetricDaily   `protobuf:"bytes,1,rep,name=metrics,proto3" json:"metrics,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *BatchSaveMetricsRequest) Reset() {
-	*x = BatchSaveMetricsRequest{}
-	mi := &file_device_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *BatchSaveMetricsRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*BatchSaveMetricsRequest) ProtoMessage() {}
-
-func (x *BatchSaveMetricsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_device_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use BatchSaveMetricsRequest.ProtoReflect.Descriptor instead.
-func (*BatchSaveMetricsRequest) Descriptor() ([]byte, []int) {
-	return file_device_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *BatchSaveMetricsRequest) GetMetrics() []*DeviceMetricDaily {
-	if x != nil {
-		return x.Metrics
-	}
-	return nil
-}
-
-// BatchSaveMetricsResponse 批量保存结果
-type BatchSaveMetricsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *BatchSaveMetricsResponse) Reset() {
-	*x = BatchSaveMetricsResponse{}
-	mi := &file_device_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *BatchSaveMetricsResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*BatchSaveMetricsResponse) ProtoMessage() {}
-
-func (x *BatchSaveMetricsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_device_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use BatchSaveMetricsResponse.ProtoReflect.Descriptor instead.
-func (*BatchSaveMetricsResponse) Descriptor() ([]byte, []int) {
-	return file_device_proto_rawDescGZIP(), []int{10}
+	return QueryType_QUERY_TYPE_UNSPECIFIED
 }
 
 var File_device_proto protoreflect.FileDescriptor
@@ -874,60 +554,31 @@ const file_device_proto_rawDesc = "" +
 	"linkStatus\x126\n" +
 	"\blastTime\x18\x16 \x01(\v2\x1a.google.protobuf.TimestampR\blastTime\x12(\n" +
 	"\x0flifecycleStatus\x18\x17 \x01(\tR\x0flifecycleStatus\x120\n" +
-	"\x13deviceBelongingType\x18\x18 \x01(\tR\x13deviceBelongingType\"M\n" +
+	"\x13deviceBelongingType\x18\x18 \x01(\tR\x13deviceBelongingType\"\x93\x01\n" +
 	"\x1aGetDevicesInfoListResponse\x12/\n" +
-	"\adevices\x18\x01 \x03(\v2\x15.devicesvr.DeviceInfoR\adevices\"\x82\x01\n" +
+	"\adevices\x18\x01 \x03(\v2\x15.devicesvr.DeviceInfoR\adevices\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\x12\x12\n" +
+	"\x04page\x18\x03 \x01(\x03R\x04page\x12\x1a\n" +
+	"\bpageSize\x18\x04 \x01(\x03R\bpageSize\"\xc8\x01\n" +
 	"\x14SearchDevicesRequest\x12\x1a\n" +
 	"\bsnNumber\x18\x01 \x01(\tR\bsnNumber\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1e\n" +
 	"\n" +
 	"deviceType\x18\x03 \x01(\tR\n" +
 	"deviceType\x12\x1a\n" +
-	"\bdeviceId\x18\x04 \x01(\tR\bdeviceId\"\xcd\x02\n" +
-	"\x11DeviceMetricDaily\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12:\n" +
-	"\n" +
-	"createTime\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"createTime\x12:\n" +
-	"\n" +
-	"updateTime\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTime\x12\x1a\n" +
-	"\bdeviceId\x18\x04 \x01(\tR\bdeviceId\x12\x1a\n" +
-	"\bsnNumber\x18\x05 \x01(\tR\bsnNumber\x12\x1e\n" +
-	"\n" +
-	"metricType\x18\x06 \x01(\tR\n" +
-	"metricType\x126\n" +
-	"\bstatDate\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\bstatDate\x12 \n" +
-	"\vmetricValue\x18\b \x01(\x01R\vmetricValue\"\xa0\x01\n" +
-	"\x16GetDailyMetricsRequest\x12\x16\n" +
-	"\x06snList\x18\x01 \x03(\tR\x06snList\x128\n" +
-	"\tstartDate\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tstartDate\x124\n" +
-	"\aendDate\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\aendDate\"\x9f\x01\n" +
-	"!GetLatestMetricsBeforeDateRequest\x12\x1c\n" +
-	"\tdeviceSns\x18\x01 \x03(\tR\tdeviceSns\x12:\n" +
-	"\n" +
-	"beforeDate\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"beforeDate\x12 \n" +
-	"\vmetricTypes\x18\x03 \x03(\tR\vmetricTypes\"\xcc\x01\n" +
-	"\x1cGetDailyMetricsByTypeRequest\x12\x1c\n" +
-	"\tdeviceSns\x18\x01 \x03(\tR\tdeviceSns\x128\n" +
-	"\tstartDate\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tstartDate\x124\n" +
-	"\aendDate\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\aendDate\x12\x1e\n" +
-	"\n" +
-	"metricType\x18\x04 \x01(\tR\n" +
-	"metricType\"V\n" +
-	"\x1cGetDeviceMetricsListResponse\x126\n" +
-	"\ametrics\x18\x01 \x03(\v2\x1c.devicesvr.DeviceMetricDailyR\ametrics\"Q\n" +
-	"\x17BatchSaveMetricsRequest\x126\n" +
-	"\ametrics\x18\x01 \x03(\v2\x1c.devicesvr.DeviceMetricDailyR\ametrics\"\x1a\n" +
-	"\x18BatchSaveMetricsResponse2\xf2\x04\n" +
+	"\bdeviceId\x18\x04 \x01(\tR\bdeviceId\x12\x10\n" +
+	"\x03pid\x18\x05 \x03(\tR\x03pid\x122\n" +
+	"\tqueryType\x18\x06 \x01(\x0e2\x14.devicesvr.QueryTypeR\tqueryType*\xa9\x01\n" +
+	"\tQueryType\x12\x1a\n" +
+	"\x16QUERY_TYPE_UNSPECIFIED\x10\x00\x12\x14\n" +
+	"\x10QUERY_TYPE_BY_SN\x10\x01\x12\x16\n" +
+	"\x12QUERY_TYPE_BY_NAME\x10\x02\x12\x1d\n" +
+	"\x19QUERY_TYPE_BY_DEVICE_TYPE\x10\x03\x12\x1b\n" +
+	"\x17QUERY_TYPE_BY_DEVICE_ID\x10\x04\x12\x16\n" +
+	"\x12QUERY_TYPE_BY_PIDS\x10\x052\xd6\x01\n" +
 	"\rDeviceService\x12a\n" +
 	"\x12GetDevicesBySnList\x12$.devicesvr.GetDevicesBySnListRequest\x1a%.devicesvr.GetDevicesInfoListResponse\x12b\n" +
-	"\x18SearchDevicesByCondition\x12\x1f.devicesvr.SearchDevicesRequest\x1a%.devicesvr.GetDevicesInfoListResponse\x12]\n" +
-	"\x0fGetDailyMetrics\x12!.devicesvr.GetDailyMetricsRequest\x1a'.devicesvr.GetDeviceMetricsListResponse\x12s\n" +
-	"\x1aGetLatestMetricsBeforeDate\x12,.devicesvr.GetLatestMetricsBeforeDateRequest\x1a'.devicesvr.GetDeviceMetricsListResponse\x12i\n" +
-	"\x15GetDailyMetricsByType\x12'.devicesvr.GetDailyMetricsByTypeRequest\x1a'.devicesvr.GetDeviceMetricsListResponse\x12[\n" +
-	"\x10BatchSaveMetrics\x12\".devicesvr.BatchSaveMetricsRequest\x1a#.devicesvr.BatchSaveMetricsResponseB\x1aZ\x18service/device;devicesvrb\x06proto3"
+	"\x18SearchDevicesByCondition\x12\x1f.devicesvr.SearchDevicesRequest\x1a%.devicesvr.GetDevicesInfoListResponseB\x1aZ\x18service/device;devicesvrb\x06proto3"
 
 var (
 	file_device_proto_rawDescOnce sync.Once
@@ -941,53 +592,31 @@ func file_device_proto_rawDescGZIP() []byte {
 	return file_device_proto_rawDescData
 }
 
-var file_device_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_device_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_device_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_device_proto_goTypes = []any{
-	(*GetDevicesBySnListRequest)(nil),         // 0: devicesvr.GetDevicesBySnListRequest
-	(*DeviceInfo)(nil),                        // 1: devicesvr.DeviceInfo
-	(*GetDevicesInfoListResponse)(nil),        // 2: devicesvr.GetDevicesInfoListResponse
-	(*SearchDevicesRequest)(nil),              // 3: devicesvr.SearchDevicesRequest
-	(*DeviceMetricDaily)(nil),                 // 4: devicesvr.DeviceMetricDaily
-	(*GetDailyMetricsRequest)(nil),            // 5: devicesvr.GetDailyMetricsRequest
-	(*GetLatestMetricsBeforeDateRequest)(nil), // 6: devicesvr.GetLatestMetricsBeforeDateRequest
-	(*GetDailyMetricsByTypeRequest)(nil),      // 7: devicesvr.GetDailyMetricsByTypeRequest
-	(*GetDeviceMetricsListResponse)(nil),      // 8: devicesvr.GetDeviceMetricsListResponse
-	(*BatchSaveMetricsRequest)(nil),           // 9: devicesvr.BatchSaveMetricsRequest
-	(*BatchSaveMetricsResponse)(nil),          // 10: devicesvr.BatchSaveMetricsResponse
-	(*timestamppb.Timestamp)(nil),             // 11: google.protobuf.Timestamp
+	(QueryType)(0),                     // 0: devicesvr.QueryType
+	(*GetDevicesBySnListRequest)(nil),  // 1: devicesvr.GetDevicesBySnListRequest
+	(*DeviceInfo)(nil),                 // 2: devicesvr.DeviceInfo
+	(*GetDevicesInfoListResponse)(nil), // 3: devicesvr.GetDevicesInfoListResponse
+	(*SearchDevicesRequest)(nil),       // 4: devicesvr.SearchDevicesRequest
+	(*timestamppb.Timestamp)(nil),      // 5: google.protobuf.Timestamp
 }
 var file_device_proto_depIdxs = []int32{
-	11, // 0: devicesvr.DeviceInfo.createTime:type_name -> google.protobuf.Timestamp
-	11, // 1: devicesvr.DeviceInfo.updateTime:type_name -> google.protobuf.Timestamp
-	11, // 2: devicesvr.DeviceInfo.lastTime:type_name -> google.protobuf.Timestamp
-	1,  // 3: devicesvr.GetDevicesInfoListResponse.devices:type_name -> devicesvr.DeviceInfo
-	11, // 4: devicesvr.DeviceMetricDaily.createTime:type_name -> google.protobuf.Timestamp
-	11, // 5: devicesvr.DeviceMetricDaily.updateTime:type_name -> google.protobuf.Timestamp
-	11, // 6: devicesvr.DeviceMetricDaily.statDate:type_name -> google.protobuf.Timestamp
-	11, // 7: devicesvr.GetDailyMetricsRequest.startDate:type_name -> google.protobuf.Timestamp
-	11, // 8: devicesvr.GetDailyMetricsRequest.endDate:type_name -> google.protobuf.Timestamp
-	11, // 9: devicesvr.GetLatestMetricsBeforeDateRequest.beforeDate:type_name -> google.protobuf.Timestamp
-	11, // 10: devicesvr.GetDailyMetricsByTypeRequest.startDate:type_name -> google.protobuf.Timestamp
-	11, // 11: devicesvr.GetDailyMetricsByTypeRequest.endDate:type_name -> google.protobuf.Timestamp
-	4,  // 12: devicesvr.GetDeviceMetricsListResponse.metrics:type_name -> devicesvr.DeviceMetricDaily
-	4,  // 13: devicesvr.BatchSaveMetricsRequest.metrics:type_name -> devicesvr.DeviceMetricDaily
-	0,  // 14: devicesvr.DeviceService.GetDevicesBySnList:input_type -> devicesvr.GetDevicesBySnListRequest
-	3,  // 15: devicesvr.DeviceService.SearchDevicesByCondition:input_type -> devicesvr.SearchDevicesRequest
-	5,  // 16: devicesvr.DeviceService.GetDailyMetrics:input_type -> devicesvr.GetDailyMetricsRequest
-	6,  // 17: devicesvr.DeviceService.GetLatestMetricsBeforeDate:input_type -> devicesvr.GetLatestMetricsBeforeDateRequest
-	7,  // 18: devicesvr.DeviceService.GetDailyMetricsByType:input_type -> devicesvr.GetDailyMetricsByTypeRequest
-	9,  // 19: devicesvr.DeviceService.BatchSaveMetrics:input_type -> devicesvr.BatchSaveMetricsRequest
-	2,  // 20: devicesvr.DeviceService.GetDevicesBySnList:output_type -> devicesvr.GetDevicesInfoListResponse
-	2,  // 21: devicesvr.DeviceService.SearchDevicesByCondition:output_type -> devicesvr.GetDevicesInfoListResponse
-	8,  // 22: devicesvr.DeviceService.GetDailyMetrics:output_type -> devicesvr.GetDeviceMetricsListResponse
-	8,  // 23: devicesvr.DeviceService.GetLatestMetricsBeforeDate:output_type -> devicesvr.GetDeviceMetricsListResponse
-	8,  // 24: devicesvr.DeviceService.GetDailyMetricsByType:output_type -> devicesvr.GetDeviceMetricsListResponse
-	10, // 25: devicesvr.DeviceService.BatchSaveMetrics:output_type -> devicesvr.BatchSaveMetricsResponse
-	20, // [20:26] is the sub-list for method output_type
-	14, // [14:20] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	5, // 0: devicesvr.DeviceInfo.createTime:type_name -> google.protobuf.Timestamp
+	5, // 1: devicesvr.DeviceInfo.updateTime:type_name -> google.protobuf.Timestamp
+	5, // 2: devicesvr.DeviceInfo.lastTime:type_name -> google.protobuf.Timestamp
+	2, // 3: devicesvr.GetDevicesInfoListResponse.devices:type_name -> devicesvr.DeviceInfo
+	0, // 4: devicesvr.SearchDevicesRequest.queryType:type_name -> devicesvr.QueryType
+	1, // 5: devicesvr.DeviceService.GetDevicesBySnList:input_type -> devicesvr.GetDevicesBySnListRequest
+	4, // 6: devicesvr.DeviceService.SearchDevicesByCondition:input_type -> devicesvr.SearchDevicesRequest
+	3, // 7: devicesvr.DeviceService.GetDevicesBySnList:output_type -> devicesvr.GetDevicesInfoListResponse
+	3, // 8: devicesvr.DeviceService.SearchDevicesByCondition:output_type -> devicesvr.GetDevicesInfoListResponse
+	7, // [7:9] is the sub-list for method output_type
+	5, // [5:7] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_device_proto_init() }
@@ -1000,13 +629,14 @@ func file_device_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_device_proto_rawDesc), len(file_device_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   11,
+			NumEnums:      1,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_device_proto_goTypes,
 		DependencyIndexes: file_device_proto_depIdxs,
+		EnumInfos:         file_device_proto_enumTypes,
 		MessageInfos:      file_device_proto_msgTypes,
 	}.Build()
 	File_device_proto = out.File

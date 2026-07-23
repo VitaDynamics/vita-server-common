@@ -42,6 +42,19 @@ message DeviceInfo {
 // GetDevicesBySnListResponse 设备信息列表
 message GetDevicesInfoListResponse {
   repeated DeviceInfo devices = 1;
+  int64 total = 2; // 总设备数
+  int64 page = 3; // 页码
+  int64 pageSize = 4; // 每页设备数
+}
+
+// QueryType 设备查询类型
+enum QueryType {
+  QUERY_TYPE_UNSPECIFIED = 0; // 未指定（按条件组合查询）
+  QUERY_TYPE_BY_SN = 1;       // 按设备序列号查询
+  QUERY_TYPE_BY_NAME = 2;     // 按设备名称查询
+  QUERY_TYPE_BY_DEVICE_TYPE = 3; // 按设备类型查询
+  QUERY_TYPE_BY_DEVICE_ID = 4;   // 按设备 ID 查询
+  QUERY_TYPE_BY_PIDS = 5;         // 按产品 ID 列表查询
 }
 
 // SearchDevicesRequest 根据 SN、名称、机器人类型查询设备信息（条件可选，支持组合查询）
@@ -50,54 +63,9 @@ message SearchDevicesRequest {
   string name = 2;        // 设备名称（模糊匹配，空则忽略）
   string deviceType = 3; // 机器人类型/设备类型（精确匹配，空则忽略）
   string deviceId = 4; //设备id
+  repeated string pid = 5; //产品id
+  QueryType queryType = 6; // 查询类型
 }
-
-// DeviceMetricDaily 设备每日累计指标
-message DeviceMetricDaily {
-  string id = 1;
-  google.protobuf.Timestamp createTime = 2;
-  google.protobuf.Timestamp updateTime = 3;
-  string deviceId = 4;                              // device id
-  string snNumber = 5;                              // device sn number
-  string metricType = 6;                            // metric type
-  google.protobuf.Timestamp statDate = 7;           // stat date
-  double metricValue = 8;                           // cumulative metric value
-}
-
-// GetDailyMetricsRequest 查询指定设备在日期范围内的每日指标
-message GetDailyMetricsRequest {
-  repeated string snList = 1;
-  google.protobuf.Timestamp startDate = 2;
-  google.protobuf.Timestamp endDate = 3;
-}
-
-// GetLatestMetricsBeforeDateRequest 查询指定设备和指标在某日期前最近一条累计指标
-message GetLatestMetricsBeforeDateRequest {
-  repeated string deviceSns = 1;
-  google.protobuf.Timestamp beforeDate = 2;
-  repeated string metricTypes = 3;
-}
-
-// GetDailyMetricsByTypeRequest 查询指定设备在日期范围内的指定类型指标
-message GetDailyMetricsByTypeRequest {
-  repeated string deviceSns = 1;
-  google.protobuf.Timestamp startDate = 2;
-  google.protobuf.Timestamp endDate = 3;
-  string metricType = 4;
-}
-
-// GetDeviceMetricsListResponse 设备每日指标列表
-message GetDeviceMetricsListResponse {
-  repeated DeviceMetricDaily metrics = 1;
-}
-
-// BatchSaveMetricsRequest 批量保存设备每日累计指标
-message BatchSaveMetricsRequest {
-  repeated DeviceMetricDaily metrics = 1;
-}
-
-// BatchSaveMetricsResponse 批量保存结果
-message BatchSaveMetricsResponse {}
 
 service DeviceService {
   // 根据 SN 列表批量查询设备信息
@@ -105,16 +73,4 @@ service DeviceService {
 
   // 根据 SN、名称、机器人类型查询设备信息
   rpc SearchDevicesByCondition(SearchDevicesRequest) returns (GetDevicesInfoListResponse);
-
-  // 查询指定设备在日期范围内的每日指标
-  rpc GetDailyMetrics(GetDailyMetricsRequest) returns (GetDeviceMetricsListResponse);
-
-  // 查询指定设备和指标在某日期前最近一条累计指标
-  rpc GetLatestMetricsBeforeDate(GetLatestMetricsBeforeDateRequest) returns (GetDeviceMetricsListResponse);
-
-  // 查询指定设备在日期范围内的指定类型指标
-  rpc GetDailyMetricsByType(GetDailyMetricsByTypeRequest) returns (GetDeviceMetricsListResponse);
-
-  // 批量保存设备每日累计指标
-  rpc BatchSaveMetrics(BatchSaveMetricsRequest) returns (BatchSaveMetricsResponse);
 }
