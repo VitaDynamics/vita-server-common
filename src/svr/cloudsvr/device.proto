@@ -70,7 +70,6 @@ message SearchDevicesRequest {
 service DeviceService {
   // 根据 SN 列表批量查询设备信息
   rpc GetDevicesBySnList(GetDevicesBySnListRequest) returns (GetDevicesInfoListResponse);
-
   // 根据 SN、名称、机器人类型查询设备信息
   rpc SearchDevicesByCondition(SearchDevicesRequest) returns (GetDevicesInfoListResponse);
 }
