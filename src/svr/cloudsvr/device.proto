@@ -54,7 +54,7 @@ enum QueryType {
   QUERY_TYPE_BY_NAME = 2;     // 按设备名称查询
   QUERY_TYPE_BY_DEVICE_TYPE = 3; // 按设备类型查询
   QUERY_TYPE_BY_DEVICE_ID = 4;   // 按设备 ID 查询
-  QUERY_TYPE_BY_PIDS = 5;         // 按产品 ID 列表查询
+  QUERY_TYPE_BY_PID = 5;         // 按产品 ID 查询
 }
 
 // SearchDevicesRequest 根据 SN、名称、机器人类型查询设备信息（条件可选，支持组合查询）
@@ -63,7 +63,7 @@ message SearchDevicesRequest {
   string name = 2;        // 设备名称（模糊匹配，空则忽略）
   string deviceType = 3; // 机器人类型/设备类型（精确匹配，空则忽略）
   string deviceId = 4; //设备id
-  repeated string pid = 5; //产品id
+  string pid = 5; //产品id
   QueryType queryType = 6; // 查询类型
 }
 

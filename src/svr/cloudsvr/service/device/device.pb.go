@@ -31,7 +31,7 @@ const (
 	QueryType_QUERY_TYPE_BY_NAME        QueryType = 2 // 按设备名称查询
 	QueryType_QUERY_TYPE_BY_DEVICE_TYPE QueryType = 3 // 按设备类型查询
 	QueryType_QUERY_TYPE_BY_DEVICE_ID   QueryType = 4 // 按设备 ID 查询
-	QueryType_QUERY_TYPE_BY_PIDS        QueryType = 5 // 按产品 ID 列表查询
+	QueryType_QUERY_TYPE_BY_PID         QueryType = 5 // 按产品 ID 查询
 )
 
 // Enum value maps for QueryType.
@@ -42,7 +42,7 @@ var (
 		2: "QUERY_TYPE_BY_NAME",
 		3: "QUERY_TYPE_BY_DEVICE_TYPE",
 		4: "QUERY_TYPE_BY_DEVICE_ID",
-		5: "QUERY_TYPE_BY_PIDS",
+		5: "QUERY_TYPE_BY_PID",
 	}
 	QueryType_value = map[string]int32{
 		"QUERY_TYPE_UNSPECIFIED":    0,
@@ -50,7 +50,7 @@ var (
 		"QUERY_TYPE_BY_NAME":        2,
 		"QUERY_TYPE_BY_DEVICE_TYPE": 3,
 		"QUERY_TYPE_BY_DEVICE_ID":   4,
-		"QUERY_TYPE_BY_PIDS":        5,
+		"QUERY_TYPE_BY_PID":         5,
 	}
 )
 
@@ -431,7 +431,7 @@ type SearchDevicesRequest struct {
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                                     // 设备名称（模糊匹配，空则忽略）
 	DeviceType    string                 `protobuf:"bytes,3,opt,name=deviceType,proto3" json:"deviceType,omitempty"`                         // 机器人类型/设备类型（精确匹配，空则忽略）
 	DeviceId      string                 `protobuf:"bytes,4,opt,name=deviceId,proto3" json:"deviceId,omitempty"`                             //设备id
-	Pid           []string               `protobuf:"bytes,5,rep,name=pid,proto3" json:"pid,omitempty"`                                       //产品id
+	Pid           string                 `protobuf:"bytes,5,opt,name=pid,proto3" json:"pid,omitempty"`                                       //产品id
 	QueryType     QueryType              `protobuf:"varint,6,opt,name=queryType,proto3,enum=devicesvr.QueryType" json:"queryType,omitempty"` // 查询类型
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -495,11 +495,11 @@ func (x *SearchDevicesRequest) GetDeviceId() string {
 	return ""
 }
 
-func (x *SearchDevicesRequest) GetPid() []string {
+func (x *SearchDevicesRequest) GetPid() string {
 	if x != nil {
 		return x.Pid
 	}
-	return nil
+	return ""
 }
 
 func (x *SearchDevicesRequest) GetQueryType() QueryType {
@@ -567,15 +567,15 @@ const file_device_proto_rawDesc = "" +
 	"deviceType\x18\x03 \x01(\tR\n" +
 	"deviceType\x12\x1a\n" +
 	"\bdeviceId\x18\x04 \x01(\tR\bdeviceId\x12\x10\n" +
-	"\x03pid\x18\x05 \x03(\tR\x03pid\x122\n" +
-	"\tqueryType\x18\x06 \x01(\x0e2\x14.devicesvr.QueryTypeR\tqueryType*\xa9\x01\n" +
+	"\x03pid\x18\x05 \x01(\tR\x03pid\x122\n" +
+	"\tqueryType\x18\x06 \x01(\x0e2\x14.devicesvr.QueryTypeR\tqueryType*\xa8\x01\n" +
 	"\tQueryType\x12\x1a\n" +
 	"\x16QUERY_TYPE_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10QUERY_TYPE_BY_SN\x10\x01\x12\x16\n" +
 	"\x12QUERY_TYPE_BY_NAME\x10\x02\x12\x1d\n" +
 	"\x19QUERY_TYPE_BY_DEVICE_TYPE\x10\x03\x12\x1b\n" +
-	"\x17QUERY_TYPE_BY_DEVICE_ID\x10\x04\x12\x16\n" +
-	"\x12QUERY_TYPE_BY_PIDS\x10\x052\xd6\x01\n" +
+	"\x17QUERY_TYPE_BY_DEVICE_ID\x10\x04\x12\x15\n" +
+	"\x11QUERY_TYPE_BY_PID\x10\x052\xd6\x01\n" +
 	"\rDeviceService\x12a\n" +
 	"\x12GetDevicesBySnList\x12$.devicesvr.GetDevicesBySnListRequest\x1a%.devicesvr.GetDevicesInfoListResponse\x12b\n" +
 	"\x18SearchDevicesByCondition\x12\x1f.devicesvr.SearchDevicesRequest\x1a%.devicesvr.GetDevicesInfoListResponseB\x1aZ\x18service/device;devicesvrb\x06proto3"
