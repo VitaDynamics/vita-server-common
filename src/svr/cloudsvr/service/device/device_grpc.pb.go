@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	DeviceService_GetDevicesBySnList_FullMethodName       = "/devicesvr.DeviceService/GetDevicesBySnList"
 	DeviceService_SearchDevicesByCondition_FullMethodName = "/devicesvr.DeviceService/SearchDevicesByCondition"
+	DeviceService_UpdateDeviceAlias_FullMethodName        = "/devicesvr.DeviceService/UpdateDeviceAlias"
 )
 
 // DeviceServiceClient is the client API for DeviceService service.
@@ -31,6 +32,8 @@ type DeviceServiceClient interface {
 	GetDevicesBySnList(ctx context.Context, in *GetDevicesBySnListRequest, opts ...grpc.CallOption) (*GetDevicesInfoListResponse, error)
 	// 根据 SN、名称、机器人类型查询设备信息
 	SearchDevicesByCondition(ctx context.Context, in *SearchDevicesRequest, opts ...grpc.CallOption) (*GetDevicesInfoListResponse, error)
+	// 根据 SN、deviceId 修改设备别名
+	UpdateDeviceAlias(ctx context.Context, in *UpdateDeviceAliasRequest, opts ...grpc.CallOption) (*UpdateDeviceAliasResponse, error)
 }
 
 type deviceServiceClient struct {
@@ -61,6 +64,16 @@ func (c *deviceServiceClient) SearchDevicesByCondition(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *deviceServiceClient) UpdateDeviceAlias(ctx context.Context, in *UpdateDeviceAliasRequest, opts ...grpc.CallOption) (*UpdateDeviceAliasResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateDeviceAliasResponse)
+	err := c.cc.Invoke(ctx, DeviceService_UpdateDeviceAlias_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DeviceServiceServer is the server API for DeviceService service.
 // All implementations must embed UnimplementedDeviceServiceServer
 // for forward compatibility.
@@ -69,6 +82,8 @@ type DeviceServiceServer interface {
 	GetDevicesBySnList(context.Context, *GetDevicesBySnListRequest) (*GetDevicesInfoListResponse, error)
 	// 根据 SN、名称、机器人类型查询设备信息
 	SearchDevicesByCondition(context.Context, *SearchDevicesRequest) (*GetDevicesInfoListResponse, error)
+	// 根据 SN、deviceId 修改设备别名
+	UpdateDeviceAlias(context.Context, *UpdateDeviceAliasRequest) (*UpdateDeviceAliasResponse, error)
 	mustEmbedUnimplementedDeviceServiceServer()
 }
 
@@ -84,6 +99,9 @@ func (UnimplementedDeviceServiceServer) GetDevicesBySnList(context.Context, *Get
 }
 func (UnimplementedDeviceServiceServer) SearchDevicesByCondition(context.Context, *SearchDevicesRequest) (*GetDevicesInfoListResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SearchDevicesByCondition not implemented")
+}
+func (UnimplementedDeviceServiceServer) UpdateDeviceAlias(context.Context, *UpdateDeviceAliasRequest) (*UpdateDeviceAliasResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateDeviceAlias not implemented")
 }
 func (UnimplementedDeviceServiceServer) mustEmbedUnimplementedDeviceServiceServer() {}
 func (UnimplementedDeviceServiceServer) testEmbeddedByValue()                       {}
@@ -142,6 +160,24 @@ func _DeviceService_SearchDevicesByCondition_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DeviceService_UpdateDeviceAlias_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateDeviceAliasRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeviceServiceServer).UpdateDeviceAlias(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DeviceService_UpdateDeviceAlias_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeviceServiceServer).UpdateDeviceAlias(ctx, req.(*UpdateDeviceAliasRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DeviceService_ServiceDesc is the grpc.ServiceDesc for DeviceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -156,6 +192,10 @@ var DeviceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SearchDevicesByCondition",
 			Handler:    _DeviceService_SearchDevicesByCondition_Handler,
+		},
+		{
+			MethodName: "UpdateDeviceAlias",
+			Handler:    _DeviceService_UpdateDeviceAlias_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

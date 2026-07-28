@@ -67,9 +67,23 @@ message SearchDevicesRequest {
   QueryType queryType = 6; // 查询类型
 }
 
+// UpdateDeviceAliasRequest 根据 SN、deviceId 修改设备别名（snNumber 与 deviceId 至少传一个）
+message UpdateDeviceAliasRequest {
+  string snNumber = 1; // 设备序列号
+  string deviceId = 2; // 设备 ID
+  string alias = 3;    // 设备别名
+}
+
+// UpdateDeviceAliasResponse 修改设备别名响应
+message UpdateDeviceAliasResponse {
+  DeviceInfo device = 1; // 更新后的设备信息
+}
+
 service DeviceService {
   // 根据 SN 列表批量查询设备信息
   rpc GetDevicesBySnList(GetDevicesBySnListRequest) returns (GetDevicesInfoListResponse);
   // 根据 SN、名称、机器人类型查询设备信息
   rpc SearchDevicesByCondition(SearchDevicesRequest) returns (GetDevicesInfoListResponse);
+  // 根据 SN、deviceId 修改设备别名
+  rpc UpdateDeviceAlias(UpdateDeviceAliasRequest) returns (UpdateDeviceAliasResponse);
 }

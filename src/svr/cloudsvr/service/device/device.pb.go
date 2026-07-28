@@ -509,6 +509,112 @@ func (x *SearchDevicesRequest) GetQueryType() QueryType {
 	return QueryType_QUERY_TYPE_UNSPECIFIED
 }
 
+// UpdateDeviceAliasRequest 根据 SN、deviceId 修改设备别名（snNumber 与 deviceId 至少传一个）
+type UpdateDeviceAliasRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SnNumber      string                 `protobuf:"bytes,1,opt,name=snNumber,proto3" json:"snNumber,omitempty"` // 设备序列号
+	DeviceId      string                 `protobuf:"bytes,2,opt,name=deviceId,proto3" json:"deviceId,omitempty"` // 设备 ID
+	Alias         string                 `protobuf:"bytes,3,opt,name=alias,proto3" json:"alias,omitempty"`       // 设备别名
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateDeviceAliasRequest) Reset() {
+	*x = UpdateDeviceAliasRequest{}
+	mi := &file_device_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDeviceAliasRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDeviceAliasRequest) ProtoMessage() {}
+
+func (x *UpdateDeviceAliasRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_device_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDeviceAliasRequest.ProtoReflect.Descriptor instead.
+func (*UpdateDeviceAliasRequest) Descriptor() ([]byte, []int) {
+	return file_device_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *UpdateDeviceAliasRequest) GetSnNumber() string {
+	if x != nil {
+		return x.SnNumber
+	}
+	return ""
+}
+
+func (x *UpdateDeviceAliasRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+func (x *UpdateDeviceAliasRequest) GetAlias() string {
+	if x != nil {
+		return x.Alias
+	}
+	return ""
+}
+
+// UpdateDeviceAliasResponse 修改设备别名响应
+type UpdateDeviceAliasResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Device        *DeviceInfo            `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"` // 更新后的设备信息
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateDeviceAliasResponse) Reset() {
+	*x = UpdateDeviceAliasResponse{}
+	mi := &file_device_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDeviceAliasResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDeviceAliasResponse) ProtoMessage() {}
+
+func (x *UpdateDeviceAliasResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_device_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDeviceAliasResponse.ProtoReflect.Descriptor instead.
+func (*UpdateDeviceAliasResponse) Descriptor() ([]byte, []int) {
+	return file_device_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *UpdateDeviceAliasResponse) GetDevice() *DeviceInfo {
+	if x != nil {
+		return x.Device
+	}
+	return nil
+}
+
 var File_device_proto protoreflect.FileDescriptor
 
 const file_device_proto_rawDesc = "" +
@@ -568,17 +674,24 @@ const file_device_proto_rawDesc = "" +
 	"deviceType\x12\x1a\n" +
 	"\bdeviceId\x18\x04 \x01(\tR\bdeviceId\x12\x10\n" +
 	"\x03pid\x18\x05 \x01(\tR\x03pid\x122\n" +
-	"\tqueryType\x18\x06 \x01(\x0e2\x14.devicesvr.QueryTypeR\tqueryType*\xa8\x01\n" +
+	"\tqueryType\x18\x06 \x01(\x0e2\x14.devicesvr.QueryTypeR\tqueryType\"h\n" +
+	"\x18UpdateDeviceAliasRequest\x12\x1a\n" +
+	"\bsnNumber\x18\x01 \x01(\tR\bsnNumber\x12\x1a\n" +
+	"\bdeviceId\x18\x02 \x01(\tR\bdeviceId\x12\x14\n" +
+	"\x05alias\x18\x03 \x01(\tR\x05alias\"J\n" +
+	"\x19UpdateDeviceAliasResponse\x12-\n" +
+	"\x06device\x18\x01 \x01(\v2\x15.devicesvr.DeviceInfoR\x06device*\xa8\x01\n" +
 	"\tQueryType\x12\x1a\n" +
 	"\x16QUERY_TYPE_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10QUERY_TYPE_BY_SN\x10\x01\x12\x16\n" +
 	"\x12QUERY_TYPE_BY_NAME\x10\x02\x12\x1d\n" +
 	"\x19QUERY_TYPE_BY_DEVICE_TYPE\x10\x03\x12\x1b\n" +
 	"\x17QUERY_TYPE_BY_DEVICE_ID\x10\x04\x12\x15\n" +
-	"\x11QUERY_TYPE_BY_PID\x10\x052\xd6\x01\n" +
+	"\x11QUERY_TYPE_BY_PID\x10\x052\xb6\x02\n" +
 	"\rDeviceService\x12a\n" +
 	"\x12GetDevicesBySnList\x12$.devicesvr.GetDevicesBySnListRequest\x1a%.devicesvr.GetDevicesInfoListResponse\x12b\n" +
-	"\x18SearchDevicesByCondition\x12\x1f.devicesvr.SearchDevicesRequest\x1a%.devicesvr.GetDevicesInfoListResponseB\x1aZ\x18service/device;devicesvrb\x06proto3"
+	"\x18SearchDevicesByCondition\x12\x1f.devicesvr.SearchDevicesRequest\x1a%.devicesvr.GetDevicesInfoListResponse\x12^\n" +
+	"\x11UpdateDeviceAlias\x12#.devicesvr.UpdateDeviceAliasRequest\x1a$.devicesvr.UpdateDeviceAliasResponseB\x1aZ\x18service/device;devicesvrb\x06proto3"
 
 var (
 	file_device_proto_rawDescOnce sync.Once
@@ -593,30 +706,35 @@ func file_device_proto_rawDescGZIP() []byte {
 }
 
 var file_device_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_device_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_device_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_device_proto_goTypes = []any{
 	(QueryType)(0),                     // 0: devicesvr.QueryType
 	(*GetDevicesBySnListRequest)(nil),  // 1: devicesvr.GetDevicesBySnListRequest
 	(*DeviceInfo)(nil),                 // 2: devicesvr.DeviceInfo
 	(*GetDevicesInfoListResponse)(nil), // 3: devicesvr.GetDevicesInfoListResponse
 	(*SearchDevicesRequest)(nil),       // 4: devicesvr.SearchDevicesRequest
-	(*timestamppb.Timestamp)(nil),      // 5: google.protobuf.Timestamp
+	(*UpdateDeviceAliasRequest)(nil),   // 5: devicesvr.UpdateDeviceAliasRequest
+	(*UpdateDeviceAliasResponse)(nil),  // 6: devicesvr.UpdateDeviceAliasResponse
+	(*timestamppb.Timestamp)(nil),      // 7: google.protobuf.Timestamp
 }
 var file_device_proto_depIdxs = []int32{
-	5, // 0: devicesvr.DeviceInfo.createTime:type_name -> google.protobuf.Timestamp
-	5, // 1: devicesvr.DeviceInfo.updateTime:type_name -> google.protobuf.Timestamp
-	5, // 2: devicesvr.DeviceInfo.lastTime:type_name -> google.protobuf.Timestamp
+	7, // 0: devicesvr.DeviceInfo.createTime:type_name -> google.protobuf.Timestamp
+	7, // 1: devicesvr.DeviceInfo.updateTime:type_name -> google.protobuf.Timestamp
+	7, // 2: devicesvr.DeviceInfo.lastTime:type_name -> google.protobuf.Timestamp
 	2, // 3: devicesvr.GetDevicesInfoListResponse.devices:type_name -> devicesvr.DeviceInfo
 	0, // 4: devicesvr.SearchDevicesRequest.queryType:type_name -> devicesvr.QueryType
-	1, // 5: devicesvr.DeviceService.GetDevicesBySnList:input_type -> devicesvr.GetDevicesBySnListRequest
-	4, // 6: devicesvr.DeviceService.SearchDevicesByCondition:input_type -> devicesvr.SearchDevicesRequest
-	3, // 7: devicesvr.DeviceService.GetDevicesBySnList:output_type -> devicesvr.GetDevicesInfoListResponse
-	3, // 8: devicesvr.DeviceService.SearchDevicesByCondition:output_type -> devicesvr.GetDevicesInfoListResponse
-	7, // [7:9] is the sub-list for method output_type
-	5, // [5:7] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	2, // 5: devicesvr.UpdateDeviceAliasResponse.device:type_name -> devicesvr.DeviceInfo
+	1, // 6: devicesvr.DeviceService.GetDevicesBySnList:input_type -> devicesvr.GetDevicesBySnListRequest
+	4, // 7: devicesvr.DeviceService.SearchDevicesByCondition:input_type -> devicesvr.SearchDevicesRequest
+	5, // 8: devicesvr.DeviceService.UpdateDeviceAlias:input_type -> devicesvr.UpdateDeviceAliasRequest
+	3, // 9: devicesvr.DeviceService.GetDevicesBySnList:output_type -> devicesvr.GetDevicesInfoListResponse
+	3, // 10: devicesvr.DeviceService.SearchDevicesByCondition:output_type -> devicesvr.GetDevicesInfoListResponse
+	6, // 11: devicesvr.DeviceService.UpdateDeviceAlias:output_type -> devicesvr.UpdateDeviceAliasResponse
+	9, // [9:12] is the sub-list for method output_type
+	6, // [6:9] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_device_proto_init() }
@@ -630,7 +748,7 @@ func file_device_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_device_proto_rawDesc), len(file_device_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
