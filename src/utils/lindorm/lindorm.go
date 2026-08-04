@@ -22,6 +22,7 @@ import (
 
 const (
 	defaultPrecision = "ms"
+	queryTimeCoast   = 1500
 )
 
 type Client struct {
@@ -39,7 +40,6 @@ func Query(client *Client, sql string, logCtx map[string]any) ([]map[string]any,
 	body, status, err := client.doRequest(http.MethodPost, endpoint, sql)
 	elapsed := time.Since(start)
 
-	logrus.WithFields(logrus.Fields(logCtx)).Infof("lindorm query time coast: sql=%s elapsed=%dms", sql, elapsed.Milliseconds())
 	if err != nil {
 		logrus.WithFields(logrus.Fields(logCtx)).Errorf("lindorm query failed: sql=%s elapsed=%dms err=%v", sql, elapsed.Milliseconds(), err)
 		return nil, err
@@ -56,7 +56,10 @@ func Query(client *Client, sql string, logCtx map[string]any) ([]map[string]any,
 		return nil, err
 	}
 
-	logrus.WithFields(logrus.Fields(logCtx)).Debugf("lindorm query success: sql=%s elapsed=%dms rows=%d", sql, elapsed.Milliseconds(), len(result))
+	//如果调用时间大于1.5s，则打印日志
+	if elapsed.Milliseconds() > queryTimeCoast {
+		logrus.WithFields(logrus.Fields(logCtx)).Infof("lindorm query time coast: sql=%s elapsed=%dms rows=%d", sql, elapsed.Milliseconds(), len(result))
+	}
 	return result, nil
 }
 
@@ -73,7 +76,9 @@ func QueryOne(client *Client, sql string, logCtx map[string]any) (map[string]any
 		return nil, nil
 	}
 
-	logrus.WithFields(logrus.Fields(logCtx)).Debugf("lindorm query one success: sql=%s elapsed=%dms", sql, elapsed.Milliseconds())
+	if elapsed.Milliseconds() > queryTimeCoast {
+		logrus.WithFields(logrus.Fields(logCtx)).Infof("lindorm query one time coast: sql=%s elapsed=%dms rows=1", sql, elapsed.Milliseconds())
+	}
 	return rows[0], nil
 }
 
@@ -82,8 +87,6 @@ func Exec(client *Client, sql string, logCtx map[string]any) error {
 	endpoint := buildQueryURL(client)
 	body, status, err := client.doRequest(http.MethodPost, endpoint, sql)
 	elapsed := time.Since(start)
-
-	logrus.WithFields(logrus.Fields(logCtx)).Infof("lindorm exec time coast: sql=%s elapsed=%dms", sql, elapsed.Milliseconds())
 
 	if err != nil {
 		logrus.WithFields(logrus.Fields(logCtx)).Errorf("lindorm exec failed: sql=%s elapsed=%dms err=%v", sql, elapsed.Milliseconds(), err)
@@ -95,7 +98,9 @@ func Exec(client *Client, sql string, logCtx map[string]any) error {
 		return err
 	}
 
-	logrus.WithFields(logrus.Fields(logCtx)).Debugf("lindorm exec success: sql=%s elapsed=%dms", sql, elapsed.Milliseconds())
+	if elapsed.Milliseconds() > queryTimeCoast {
+		logrus.WithFields(logrus.Fields(logCtx)).Infof("lindorm exec time coast: sql=%s elapsed=%dms", sql, elapsed.Milliseconds())
+	}
 	return nil
 }
 
