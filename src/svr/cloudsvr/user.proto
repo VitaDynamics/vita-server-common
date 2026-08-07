@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package usersvr;
+
+option go_package = "service/user;usersvr";
+
+import "google/protobuf/struct.proto";
+
+service UserService {
+  // 更新用户数据
+  rpc UpdateUserData(UpdateUserDataRequest) returns (UpdateUserDataResponse);
+}
+
+enum OperType {
+  OPER_TYPE_UNSPECIFIED = 0;
+  OPER_TYPE_INSERT = 1;
+  OPER_TYPE_UPDATE = 2;
+}
+
+enum DataType {
+  DATA_TYPE_UNSPECIFIED = 0;
+  DATA_TYPE_FOLLOW_PERMISSION = 1;
+  DATA_TYPE_TRIGGER_INFO = 2;
+}
+
+message UpdateUserDataRequest {
+  // 操作类型
+  OperType operType = 1;
+
+  // 数据类型
+  DataType dataType = 2;
+
+  // 数据内容，支持字符串、数字、布尔值、对象和数组等类型
+  google.protobuf.Struct data = 3;
+}
+
+message UpdateUserDataResponse {
+  // 状态码：0 表示成功，其他表示失败
+  int32 code = 1;
+
+  // 结果说明
+  string message = 2;
+}
