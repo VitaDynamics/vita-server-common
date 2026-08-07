@@ -1,0 +1,127 @@
+name: Generate tag changelog
+
+on:
+  push:
+    tags:
+      - "**"
+
+permissions:
+  contents: write
+
+jobs:
+  generate-changelog:
+    name: Generate changelog
+    runs-on:
+      - self-hosted
+      - test-env
+      - change-record
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog file
+        id: changelog
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
+        run: |
+          set -euo pipefail
+
+          previous_tag="$(git describe --tags --abbrev=0 "${TAG_NAME}^" 2>/dev/null || true)"
+          if [[ -n "${previous_tag}" ]]; then
+            commit_range="${previous_tag}..${TAG_NAME}"
+            compare_url="${SERVER_URL}/${REPOSITORY}/compare/${previous_tag}...${TAG_NAME}"
+          else
+            commit_range="${TAG_NAME}"
+            compare_url=""
+          fi
+
+          {
+            echo "# ${TAG_NAME} 变更说明"
+            echo
+            echo "- 生成时间：$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            if [[ -n "${previous_tag}" ]]; then
+              echo "- 对比范围：[${previous_tag}...${TAG_NAME}](${compare_url})"
+            else
+              echo "- 对比范围：仓库初始提交至 ${TAG_NAME}"
+            fi
+            echo
+            echo "## 提交记录"
+            echo
+
+            if [[ "$(git rev-list --count "${commit_range}")" -gt 0 ]]; then
+              git log --format="- %s ([\`%h\`](${SERVER_URL}/${REPOSITORY}/commit/%H))" "${commit_range}"
+            else
+              echo "- 无新增提交"
+            fi
+
+            echo
+            echo "## 变更文件"
+            echo
+            echo '```text'
+            if [[ -n "${previous_tag}" ]]; then
+              git diff --name-status "${previous_tag}" "${TAG_NAME}"
+            else
+              git ls-tree -r --name-only "${TAG_NAME}" | awk '{ print "A\t" $0 }'
+            fi
+            echo '```'
+          } > tag-changelog.md
+
+          cat tag-changelog.md >> "${GITHUB_STEP_SUMMARY}"
+          safe_tag="${TAG_NAME//\//-}"
+          echo "file_name=${safe_tag}.md" >> "${GITHUB_OUTPUT}"
+          cp tag-changelog.md "${RUNNER_TEMP}/${safe_tag}.md"
+
+      - name: Upload changelog file
+        uses: actions/upload-artifact@v4
+        with:
+          name: tag-changelog
+          path: tag-changelog.md
+          if-no-files-found: error
+
+      - name: Checkout default branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: Commit changelog to doc directory
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          FILE_NAME: ${{ steps.changelog.outputs.file_name }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p doc
+          cp "${RUNNER_TEMP}/${FILE_NAME}" "doc/${FILE_NAME}"
+
+          git add "doc/${FILE_NAME}"
+          if git diff --cached --quiet; then
+            echo "Changelog already exists and has not changed."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs: add changelog for ${TAG_NAME}"
+
+          for attempt in 1 2 3; do
+            if git push origin "HEAD:${DEFAULT_BRANCH}"; then
+              echo "Changelog pushed successfully."
+              exit 0
+            fi
+
+            if [[ "${attempt}" -eq 3 ]]; then
+              echo "Failed to push changelog after 3 attempts."
+              exit 1
+            fi
+
+            echo "Push attempt ${attempt} failed; rebasing before retry."
+            git pull --rebase origin "${DEFAULT_BRANCH}"
+            sleep $((attempt * 5))
+          done
