@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -26,15 +27,17 @@ import (
 
 type SMSConfig struct {
 	Provider        string         `yaml:"provider"` // aliyun | tencent | volcano
-	AccessKey       string         `yaml:"access_key"`
-	AccessSecret    string         `yaml:"access_secret"`
-	SignName        string         `yaml:"sign_name"`
-	TemplateCode    string         `yaml:"template_code"`
-	SendRateLimit   int            `yaml:"send_rate_limit"`
 	CooldownSeconds int            `yaml:"cooldown_seconds"`
 	Aliyun          *AliyunConfig  `yaml:"aliyun"`
 	Tencent         *TencentConfig `yaml:"tencent"`
 	Volcano         *VolcanoConfig `yaml:"volcano"`
+
+	//海外配置
+	Overseas *OverseaSmsConfig `yaml:"overseas"`
+}
+type OverseaSmsConfig struct {
+	Provider string         `yaml:"provider"`
+	Volcano  *VolcanoConfig `yaml:"volcano"`
 }
 
 type AliyunConfig struct {
@@ -71,6 +74,10 @@ func cooldownKey(phone string) string {
 	return fmt.Sprintf("sms:cooldown:%s", phone)
 }
 
+func overseasCooldownKey(phone string) string {
+	return fmt.Sprintf("sms:overseas:cooldown:%s", phone)
+}
+
 func formatCooldownMessage(d time.Duration) string {
 	if d < time.Minute {
 		return fmt.Sprintf("验证码已发送，请等待 %d 秒后重试", int(d.Seconds()))
@@ -90,7 +97,7 @@ func SendSMS(phone string, params *SMSConfig, redisClient *redis.Client) error {
 		return fmt.Errorf("检查 Redis 失败: %w", err)
 	}
 	if exists > 0 {
-		return fmt.Errorf(formatCooldownMessage(cooldown))
+		return errors.New(formatCooldownMessage(cooldown))
 	}
 
 	code := generateCode()
@@ -112,9 +119,45 @@ func SendSMS(phone string, params *SMSConfig, redisClient *redis.Client) error {
 	case "tencent":
 		return sendTencentSMS(phone, code, conf)
 	case "volcano":
-		return sendVolcanoSMS(phone, code, conf)
+		return sendVolcanoSMS(phone, code, conf.Volcano)
 	default:
 		return fmt.Errorf("不支持的短信服务商: %s", conf.Provider)
+	}
+}
+
+func SendOverseaSMS(phone string, params *SMSConfig, redisClient *redis.Client) error {
+	// 检查是否处于发送冷却期
+	cooldown := defaultCooldown
+	if params != nil && params.CooldownSeconds > 0 {
+		cooldown = time.Duration(params.CooldownSeconds) * time.Second
+	}
+
+	exists, err := redisClient.Exists(context.Background(), overseasCooldownKey(phone)).Result()
+	if err != nil {
+		return fmt.Errorf("检查 Redis 失败: %w", err)
+	}
+	if exists > 0 {
+		return errors.New(formatCooldownMessage(cooldown))
+	}
+
+	code := generateCode()
+	conf := params.Overseas
+	// 将验证码存入 Redis 并设置过期时间
+	err = redisClient.Set(context.Background(), phone, code, codeExpiration).Err()
+	if err != nil {
+		return fmt.Errorf("存储验证码到 Redis 失败: %w", err)
+	}
+	// 设置发送冷却 key
+	err = redisClient.Set(context.Background(), overseasCooldownKey(phone), "1", cooldown).Err()
+	if err != nil {
+		return fmt.Errorf("存储请求冷却时间到 Redis 失败: %w", err)
+	}
+
+	switch conf.Provider {
+	case "volcano":
+		return sendVolcanoSMS(phone, code, conf.Volcano)
+	default:
+		return fmt.Errorf("不支持的短信服务商: %s", params.Provider)
 	}
 }
 
@@ -198,16 +241,16 @@ type VolcanoSMSResponse struct {
 	} `json:"Result"`
 }
 
-func sendVolcanoSMS(phone, code string, conf *SMSConfig) error {
+func sendVolcanoSMS(phone, code string, volcanoConf *VolcanoConfig) error {
 	// Prepare request parameters for JSON format
 	// Create the template parameter as a JSON string (not object)
 	templateParamJSON := fmt.Sprintf(`{"code":"%s"}`, code)
 
 	// Create the request body structure
 	requestBody := map[string]interface{}{
-		"SmsAccount":    conf.Volcano.SmsAccount,
-		"Sign":          conf.Volcano.SignName,
-		"TemplateID":    conf.Volcano.TemplateId,
+		"SmsAccount":    volcanoConf.SmsAccount,
+		"Sign":          volcanoConf.SignName,
+		"TemplateID":    volcanoConf.TemplateId,
 		"TemplateParam": templateParamJSON,
 		"PhoneNumbers":  phone,
 	}
@@ -220,7 +263,7 @@ func sendVolcanoSMS(phone, code string, conf *SMSConfig) error {
 
 	// Create HTTP request with JSON format
 	endpoint := "https://sms.volcengineapi.com"
-	req, err := createVolcanoRequest("POST", endpoint, queryParams, requestBody, conf.Volcano)
+	req, err := createVolcanoRequest("POST", endpoint, queryParams, requestBody, volcanoConf)
 	if err != nil {
 		return fmt.Errorf("创建请求失败: %w", err)
 	}
