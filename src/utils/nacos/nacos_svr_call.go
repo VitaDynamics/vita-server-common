@@ -65,9 +65,36 @@ type GrpcCallParam struct {
 	RetryCount  int  //重试次数，默认为1次
 }
 
+// nacosService 是一次 gRPC 发现的目标。客户端和 resolver 共用这一份，避免两边各存服务名、分组和集群。
+type nacosService struct {
+	namingClient naming_client.INamingClient
+	serviceName  string
+	groupName    string
+	clusterName  string
+}
+
+func (s *nacosService) clusters() []string {
+	if s.clusterName == "" {
+		return []string{}
+	}
+	return []string{s.clusterName}
+}
+
+func (s *nacosService) logFields() logrus.Fields {
+	return logrus.Fields{
+		"service": s.serviceName,
+		"group":   s.groupName,
+	}
+}
+
 // SelectGrpcAddr picks one healthy instance address via a reusable naming client.
 func SelectGrpcAddr(namingClient naming_client.INamingClient, serviceName, groupName, clusterName string) (string, error) {
-	addrs, err := selectGrpcAddrsFromNacos(namingClient, serviceName, groupName, clusterName)
+	addrs, err := selectGrpcAddrsFromNacos(&nacosService{
+		namingClient: namingClient,
+		serviceName:  serviceName,
+		groupName:    groupName,
+		clusterName:  clusterName,
+	})
 	if err != nil {
 		return "", err
 	}
@@ -75,29 +102,26 @@ func SelectGrpcAddr(namingClient naming_client.INamingClient, serviceName, group
 }
 
 // selectGrpcAddrsFromNacos returns all healthy instance addresses via a reusable naming client.
-func selectGrpcAddrsFromNacos(namingClient naming_client.INamingClient, serviceName, groupName, clusterName string) ([]string, error) {
-	if namingClient == nil {
+func selectGrpcAddrsFromNacos(svc *nacosService) ([]string, error) {
+	if svc == nil || svc.namingClient == nil {
 		return nil, fmt.Errorf("nacos naming client is nil")
 	}
+	groupName := svc.groupName
 	if groupName == "" {
 		groupName = DefaultNacosGroup
 	}
-	clusters := []string{}
-	if clusterName != "" {
-		clusters = []string{clusterName}
-	}
 
-	instances, err := namingClient.SelectInstances(vo.SelectInstancesParam{
-		ServiceName: serviceName,
+	instances, err := svc.namingClient.SelectInstances(vo.SelectInstancesParam{
+		ServiceName: svc.serviceName,
 		GroupName:   groupName,
-		Clusters:    clusters,
+		Clusters:    svc.clusters(),
 		HealthyOnly: true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("nacos discover service=%s group=%s failed: %w", serviceName, groupName, err)
+		return nil, fmt.Errorf("nacos discover service=%s group=%s failed: %w", svc.serviceName, groupName, err)
 	}
 	if len(instances) == 0 {
-		return nil, fmt.Errorf("nacos discover service=%s group=%s returned no healthy instances", serviceName, groupName)
+		return nil, fmt.Errorf("nacos discover service=%s group=%s returned no healthy instances", svc.serviceName, groupName)
 	}
 
 	addrs := make([]string, 0, len(instances))
@@ -118,13 +142,8 @@ func selectGrpcAddrsFromNacos(namingClient naming_client.INamingClient, serviceN
 type NacosGrpcClient struct {
 	mu              sync.Mutex
 	conn            *grpc.ClientConn
+	svc             *nacosService
 	resolverBuilder *nacosResolverBuilder
-	namingClient    naming_client.INamingClient
-	nacosConf       *PkgNacosConfig
-	namespaceID     string
-	serviceName     string
-	groupName       string
-	clusterName     string
 	idleTimeout     time.Duration
 }
 
@@ -166,13 +185,13 @@ func NewNacosGrpcClient(cfg NacosGrpcClientConfig) (*NacosGrpcClient, error) {
 	}
 
 	client := &NacosGrpcClient{
-		namingClient: namingClient,
-		nacosConf:    cfg.NacosConf,
-		namespaceID:  cfg.NamespaceID,
-		serviceName:  cfg.ServiceName,
-		groupName:    cfg.GroupName,
-		clusterName:  cfg.ClusterName,
-		idleTimeout:  cfg.IdleTimeout,
+		svc: &nacosService{
+			namingClient: namingClient,
+			serviceName:  cfg.ServiceName,
+			groupName:    cfg.GroupName,
+			clusterName:  cfg.ClusterName,
+		},
+		idleTimeout: cfg.IdleTimeout,
 	}
 
 	conn, builder, err := client.dialConn(context.Background())
@@ -204,7 +223,7 @@ func (p *NacosGrpcClient) Invoke(ctx context.Context, param GrpcCallParam) error
 	ctx, traceID := injectTraceID(ctx)
 	ctx = injectTraceMetadata(ctx, traceID)
 	logCtx := buildLogCtxWithTrace(ctx, logrus.Fields{
-		"service": p.serviceName,
+		"service": p.svc.serviceName,
 		"method":  param.FullMethod,
 	})
 
@@ -325,10 +344,10 @@ func (p *NacosGrpcClient) waitReady(ctx context.Context, conn *grpc.ClientConn) 
 			return nil
 		}
 		if state == connectivity.Shutdown {
-			return fmt.Errorf("grpc connection shutdown before ready service=%s", p.serviceName)
+			return fmt.Errorf("grpc connection shutdown before ready service=%s", p.svc.serviceName)
 		}
 		if !conn.WaitForStateChange(waitCtx, state) {
-			return fmt.Errorf("grpc connect timeout service=%s state=%s: %w", p.serviceName, state.String(), waitCtx.Err())
+			return fmt.Errorf("grpc connect timeout service=%s state=%s: %w", p.svc.serviceName, state.String(), waitCtx.Err())
 		}
 	}
 }
@@ -336,16 +355,14 @@ func (p *NacosGrpcClient) waitReady(ctx context.Context, conn *grpc.ClientConn) 
 // dialConn 创建由 nacos resolver 驱动的 channel。
 // 建连前先确认服务当前有健康实例，让调用方在服务整体不可用时能立即拿到错误并进入自己的重试逻辑。
 func (p *NacosGrpcClient) dialConn(ctx context.Context) (*grpc.ClientConn, *nacosResolverBuilder, error) {
-	logCtx := buildLogCtxWithTrace(ctx, logrus.Fields{
-		"service": p.serviceName,
-	})
+	logCtx := buildLogCtxWithTrace(ctx, p.svc.logFields())
 
-	if _, err := selectGrpcAddrsFromNacos(p.namingClient, p.serviceName, p.groupName, p.clusterName); err != nil {
+	if _, err := selectGrpcAddrsFromNacos(p.svc); err != nil {
 		logrus.WithFields(logCtx).Errorf("resolve grpc address failed: %v", err)
 		return nil, nil, err
 	}
 
-	builder := newNacosResolverBuilder(p.namingClient, p.serviceName, p.groupName, p.clusterName)
+	builder := newNacosResolverBuilder(p.svc)
 	conn, err := grpc.NewClient(builder.target(),
 		grpc.WithResolvers(builder),
 		grpc.WithDefaultServiceConfig(nacosGrpcServiceConfig),
@@ -355,7 +372,7 @@ func (p *NacosGrpcClient) dialConn(ctx context.Context) (*grpc.ClientConn, *naco
 	)
 	if err != nil {
 		logrus.WithFields(logCtx).Errorf("create grpc client failed: %v", err)
-		return nil, nil, fmt.Errorf("grpc create client for service=%s failed: %w", p.serviceName, err)
+		return nil, nil, fmt.Errorf("grpc create client for service=%s failed: %w", p.svc.serviceName, err)
 	}
 
 	conn.Connect()

@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nacos-group/nacos-sdk-go/v2/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/v2/model"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"github.com/sirupsen/logrus"
@@ -25,24 +24,16 @@ const (
 )
 
 // nacosResolverBuilder 把一个 Nacos 服务解析为 grpc 地址列表。
-// 每个 NacosGrpcClient 持有独立实例，解析参数直接来自 builder，因此 target 里只带服务名便于排查。
+// 服务标识复用客户端持有的 nacosService，target 里只带服务名便于排查。
 type nacosResolverBuilder struct {
-	namingClient naming_client.INamingClient
-	serviceName  string
-	groupName    string
-	clusterName  string
+	svc *nacosService
 
 	mu      sync.Mutex
 	current *nacosResolver
 }
 
-func newNacosResolverBuilder(namingClient naming_client.INamingClient, serviceName, groupName, clusterName string) *nacosResolverBuilder {
-	return &nacosResolverBuilder{
-		namingClient: namingClient,
-		serviceName:  serviceName,
-		groupName:    groupName,
-		clusterName:  clusterName,
-	}
+func newNacosResolverBuilder(svc *nacosService) *nacosResolverBuilder {
+	return &nacosResolverBuilder{svc: svc}
 }
 
 func (b *nacosResolverBuilder) Scheme() string {
@@ -51,7 +42,7 @@ func (b *nacosResolverBuilder) Scheme() string {
 
 // target 返回该 builder 对应的 grpc target。
 func (b *nacosResolverBuilder) target() string {
-	return fmt.Sprintf("%s:///%s", nacosResolverScheme, url.PathEscape(b.serviceName))
+	return fmt.Sprintf("%s:///%s", nacosResolverScheme, url.PathEscape(b.svc.serviceName))
 }
 
 // Build 每次 channel 退出 idle 都会被调用，这里同步做一次解析，让 channel 立刻拿到当前实例列表。
@@ -67,7 +58,7 @@ func (b *nacosResolverBuilder) Build(_ resolver.Target, cc resolver.ClientConn, 
 
 	// 订阅失败不阻塞建连：兜底轮询与 ResolveNow 仍能拿到最新地址。
 	r.subParam = r.newSubscribeParam()
-	if err := b.namingClient.Subscribe(r.subParam); err != nil {
+	if err := b.svc.namingClient.Subscribe(r.subParam); err != nil {
 		logrus.WithFields(r.logFields()).Warnf("subscribe nacos service failed, fallback to periodic sync: %v", err)
 		r.subParam = nil
 	}
@@ -119,7 +110,7 @@ func (r *nacosResolver) Close() {
 
 		// Unsubscribe 依据 SubscribeParam 中回调字段的地址定位订阅，必须传回注册时的同一个 param。
 		if r.subParam != nil {
-			if err := r.builder.namingClient.Unsubscribe(r.subParam); err != nil {
+			if err := r.builder.svc.namingClient.Unsubscribe(r.subParam); err != nil {
 				logrus.WithFields(r.logFields()).Warnf("unsubscribe nacos service failed: %v", err)
 			}
 		}
@@ -157,7 +148,7 @@ func (r *nacosResolver) watch() {
 
 // resolve 查询 Nacos 健康实例并推送给 grpc；解析失败只上报错误，保留上一次的地址列表。
 func (r *nacosResolver) resolve() {
-	addrs, err := selectGrpcAddrsFromNacos(r.builder.namingClient, r.builder.serviceName, r.builder.groupName, r.builder.clusterName)
+	addrs, err := selectGrpcAddrsFromNacos(r.builder.svc)
 	if err != nil {
 		r.cc.ReportError(err)
 		logrus.WithFields(r.logFields()).Warnf("resolve nacos service failed: %v", err)
@@ -183,14 +174,10 @@ func (r *nacosResolver) resolve() {
 }
 
 func (r *nacosResolver) newSubscribeParam() *vo.SubscribeParam {
-	clusters := []string{}
-	if r.builder.clusterName != "" {
-		clusters = []string{r.builder.clusterName}
-	}
 	return &vo.SubscribeParam{
-		ServiceName: r.builder.serviceName,
-		GroupName:   r.builder.groupName,
-		Clusters:    clusters,
+		ServiceName: r.builder.svc.serviceName,
+		GroupName:   r.builder.svc.groupName,
+		Clusters:    r.builder.svc.clusters(),
 		SubscribeCallback: func(_ []model.Instance, err error) {
 			if err != nil {
 				logrus.WithFields(r.logFields()).Warnf("nacos subscribe callback error: %v", err)
@@ -202,10 +189,7 @@ func (r *nacosResolver) newSubscribeParam() *vo.SubscribeParam {
 }
 
 func (r *nacosResolver) logFields() logrus.Fields {
-	return logrus.Fields{
-		"service": r.builder.serviceName,
-		"group":   r.builder.groupName,
-	}
+	return r.builder.svc.logFields()
 }
 
 func sameAddrs(old, new []string) bool {
