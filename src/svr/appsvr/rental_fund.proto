@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package rentalfund;
+
+option go_package = "service//rentalfund;rentalfund";
+
+// 租赁资金。云平台发起调用，退款由 app-server 执行。
+service RentalFundService {
+  // 管理员按订单手工退租金或退押金。
+  rpc ManualRefund(ManualRefundRequest) returns (ManualRefundResponse);
+}
+
+message ManualRefundRequest {
+  uint64 orderId = 1;
+
+  // rental 退租金，deposit 退押金。
+  string refundType = 2;
+
+  // 退款金额，单位分。
+  uint64 refundAmount = 3;
+
+  // 退款原因。
+  string reason = 4;
+
+  // 退款说明。
+  string remark = 5;
+
+  // 操作人 ID。
+  string operatorId = 6;
+
+  // 云平台已选定的原支付或冻结交易。
+  uint64 paymentId = 7;
+}
+
+message ManualRefundResponse {
+  // 状态码：0 成功，其他失败。
+  int32 status = 1;
+
+  // 结果说明。
+  string message = 2;
+
+  // 退款受理结果。
+  ManualRefundResult data = 3;
+}
+
+message ManualRefundResult {
+  uint64 refundId = 1;
+
+  uint64 orderId = 2;
+
+  string refundType = 3;
+
+  // 退款金额，单位分。
+  uint64 refundAmount = 4;
+
+  // PROCESSING 表示渠道已受理。
+  string refundStatus = 5;
+
+  // RFC3339 UTC。
+  string createdAt = 6;
+}
