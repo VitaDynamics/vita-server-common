@@ -72,6 +72,10 @@ message DeviceBindInfo {
 message QueryUserBasicInfoRequest {
   // 用户手机号。
   string phone = 1;
+  // 用户user_id
+  string userId = 2;
+  // 设备sn
+  string deviceSn = 3;
 }
 
 message QueryUserBasicInfoResponse {

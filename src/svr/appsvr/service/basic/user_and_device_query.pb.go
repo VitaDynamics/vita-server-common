@@ -276,7 +276,11 @@ func (x *DeviceBindInfo) GetUnbindTime() int64 {
 type QueryUserBasicInfoRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 用户手机号。
-	Phone         string `protobuf:"bytes,1,opt,name=phone,proto3" json:"phone,omitempty"`
+	Phone string `protobuf:"bytes,1,opt,name=phone,proto3" json:"phone,omitempty"`
+	// 用户user_id
+	UserId string `protobuf:"bytes,2,opt,name=userId,proto3" json:"userId,omitempty"`
+	// 设备sn
+	DeviceSn      string `protobuf:"bytes,3,opt,name=deviceSn,proto3" json:"deviceSn,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -314,6 +318,20 @@ func (*QueryUserBasicInfoRequest) Descriptor() ([]byte, []int) {
 func (x *QueryUserBasicInfoRequest) GetPhone() string {
 	if x != nil {
 		return x.Phone
+	}
+	return ""
+}
+
+func (x *QueryUserBasicInfoRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *QueryUserBasicInfoRequest) GetDeviceSn() string {
+	if x != nil {
+		return x.DeviceSn
 	}
 	return ""
 }
@@ -806,9 +824,11 @@ const file_user_and_device_query_proto_rawDesc = "" +
 	"\n" +
 	"unbindTime\x18\n" +
 	" \x01(\x03R\n" +
-	"unbindTime\"1\n" +
+	"unbindTime\"e\n" +
 	"\x19QueryUserBasicInfoRequest\x12\x14\n" +
-	"\x05phone\x18\x01 \x01(\tR\x05phone\"}\n" +
+	"\x05phone\x18\x01 \x01(\tR\x05phone\x12\x16\n" +
+	"\x06userId\x18\x02 \x01(\tR\x06userId\x12\x1a\n" +
+	"\bdeviceSn\x18\x03 \x01(\tR\bdeviceSn\"}\n" +
 	"\x1aQueryUserBasicInfoResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\x05R\x06status\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12-\n" +

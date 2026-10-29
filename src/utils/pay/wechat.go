@@ -2,6 +2,7 @@ package pay
 
 import (
 	"bytes"
+	"context"
 	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
@@ -331,9 +332,19 @@ func (c *WechatClient) CreatePayParams(orderNo, packageType string, amount float
 }
 
 func (c *WechatClient) VerifyNotify(r *http.Request) error {
-	wechatpayTimestamp := r.Header.Get("Wechatpay-Timestamp")
-	wechatpayNonce := r.Header.Get("Wechatpay-Nonce")
-	wechatpaySignature := r.Header.Get("Wechatpay-Signature")
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return fmt.Errorf("read notify body failed: %w", err)
+	}
+	r.Body = io.NopCloser(bytes.NewReader(body))
+
+	return c.verifyNotifySignature(r.Header, body)
+}
+
+func (c *WechatClient) verifyNotifySignature(header http.Header, body []byte) error {
+	wechatpayTimestamp := header.Get("Wechatpay-Timestamp")
+	wechatpayNonce := header.Get("Wechatpay-Nonce")
+	wechatpaySignature := header.Get("Wechatpay-Signature")
 
 	if wechatpayTimestamp == "" || wechatpayNonce == "" || wechatpaySignature == "" {
 		return errors.New("missing Wechatpay headers for verification")
@@ -348,12 +359,6 @@ func (c *WechatClient) VerifyNotify(r *http.Request) error {
 	if signedAt.Before(now.Add(-5*time.Minute)) || signedAt.After(now.Add(5*time.Minute)) {
 		return errors.New("stale Wechatpay-Timestamp")
 	}
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		return fmt.Errorf("read notify body failed: %w", err)
-	}
-	r.Body = io.NopCloser(bytes.NewReader(body))
 
 	if c.WechatPublicKey == nil {
 		return errors.New("wechat public key not loaded, cannot verify signature")
@@ -460,6 +465,10 @@ func (c *WechatClient) decryptNotifyResource(resource WechatV3NotifyResource) (s
 }
 
 func (c *WechatClient) doRequest(method, reqUrl string, body []byte) ([]byte, error) {
+	return c.doRequestWithContext(context.Background(), method, reqUrl, body)
+}
+
+func (c *WechatClient) doRequestWithContext(ctx context.Context, method, reqUrl string, body []byte) ([]byte, error) {
 	if c.PrivateKey == nil {
 		return nil, errors.New("private key not loaded, cannot sign request")
 	}
@@ -490,7 +499,7 @@ func (c *WechatClient) doRequest(method, reqUrl string, body []byte) ([]byte, er
 		c.MchId, c.SerialNo, nonceStr, timestamp, signature,
 	)
 
-	req, err := http.NewRequest(method, reqUrl, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, method, reqUrl, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
@@ -518,7 +527,12 @@ func (c *WechatClient) doRequest(method, reqUrl string, body []byte) ([]byte, er
 	}
 
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("wechat api error (status %d): %s", resp.StatusCode, string(respBody))
+		apiErr := &WechatV3APIError{StatusCode: resp.StatusCode, Body: string(respBody)}
+		var e WechatV3Error
+		if json.Unmarshal(respBody, &e) == nil {
+			apiErr.Code, apiErr.Message = e.Code, e.Message
+		}
+		return nil, apiErr
 	}
 
 	return respBody, nil
@@ -578,4 +592,16 @@ type WechatV3Error struct {
 
 func (e *WechatV3Error) Error() string {
 	return fmt.Sprintf("%s: %s", e.Code, e.Message)
+}
+
+// WechatV3APIError 微信支付 V3 接口返回 4xx/5xx，Code 为微信错误码（如 ORDER_NOT_EXIST、ORDERPAID）
+type WechatV3APIError struct {
+	StatusCode int
+	Code       string
+	Message    string
+	Body       string
+}
+
+func (e *WechatV3APIError) Error() string {
+	return fmt.Sprintf("wechat api error (status %d): %s", e.StatusCode, e.Body)
 }
