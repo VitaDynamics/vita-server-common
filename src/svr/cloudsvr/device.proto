@@ -79,6 +79,21 @@ message UpdateDeviceAliasResponse {
   DeviceInfo device = 1; // 更新后的设备信息
 }
 
+// UpdateDeviceRequest 更新设备。snNumber 与 deviceId 至少传一个。
+// updateType 为 owner 时更新 owner，为 bindStatus 时更新绑定状态。
+message UpdateDeviceRequest {
+  string snNumber = 1;   // 设备序列号
+  string deviceId = 2;   // 设备 ID
+  string owner = 3;      // 所有者。updateType 为 owner 时使用
+  string bindStatus = 4; // 绑定状态。updateType 为 bindStatus 时使用
+  string updateType = 5; // owner 更新所有者，bindStatus 更新绑定状态
+}
+
+// UpdateDeviceResponse 更新设备响应
+message UpdateDeviceResponse {
+  DeviceInfo device = 1; // 更新后的设备信息
+}
+
 service DeviceService {
   // 根据 SN 列表批量查询设备信息
   rpc GetDevicesBySnList(GetDevicesBySnListRequest) returns (GetDevicesInfoListResponse);
@@ -86,4 +101,6 @@ service DeviceService {
   rpc SearchDevicesByCondition(SearchDevicesRequest) returns (GetDevicesInfoListResponse);
   // 根据 SN、deviceId 修改设备别名
   rpc UpdateDeviceAlias(UpdateDeviceAliasRequest) returns (UpdateDeviceAliasResponse);
+  // 按 updateType 更新设备。owner 更新所有者，bindStatus 更新绑定状态。
+  rpc UpdateDevice(UpdateDeviceRequest) returns (UpdateDeviceResponse);
 }

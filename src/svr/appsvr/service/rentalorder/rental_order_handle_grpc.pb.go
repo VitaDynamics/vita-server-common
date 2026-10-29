@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v5.29.3
-// source: rental_fund.proto
+// source: rental_order_handle.proto
 
-package rentalfund
+package rentalorder
 
 import (
 	context "context"
@@ -19,17 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	RentalFundService_ManualRefund_FullMethodName = "/rentalfund.RentalFundService/ManualRefund"
+	RentalFundService_OrderFundHandle_FullMethodName = "/rentalorder.RentalFundService/OrderFundHandle"
 )
 
 // RentalFundServiceClient is the client API for RentalFundService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// 租赁资金。云平台发起调用，退款由 app-server 执行。
+// 租赁订单资金处理。云平台发起调用，由 app-server 执行。
 type RentalFundServiceClient interface {
-	// 管理员按订单手工退租金或退押金。
-	ManualRefund(ctx context.Context, in *ManualRefundRequest, opts ...grpc.CallOption) (*ManualRefundResponse, error)
+	// 按 refundType 处理。rental 退租金，deposit 退押金。
+	OrderFundHandle(ctx context.Context, in *ManualRefundRequest, opts ...grpc.CallOption) (*ManualRefundResponse, error)
 }
 
 type rentalFundServiceClient struct {
@@ -40,10 +40,10 @@ func NewRentalFundServiceClient(cc grpc.ClientConnInterface) RentalFundServiceCl
 	return &rentalFundServiceClient{cc}
 }
 
-func (c *rentalFundServiceClient) ManualRefund(ctx context.Context, in *ManualRefundRequest, opts ...grpc.CallOption) (*ManualRefundResponse, error) {
+func (c *rentalFundServiceClient) OrderFundHandle(ctx context.Context, in *ManualRefundRequest, opts ...grpc.CallOption) (*ManualRefundResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ManualRefundResponse)
-	err := c.cc.Invoke(ctx, RentalFundService_ManualRefund_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, RentalFundService_OrderFundHandle_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -54,10 +54,10 @@ func (c *rentalFundServiceClient) ManualRefund(ctx context.Context, in *ManualRe
 // All implementations must embed UnimplementedRentalFundServiceServer
 // for forward compatibility.
 //
-// 租赁资金。云平台发起调用，退款由 app-server 执行。
+// 租赁订单资金处理。云平台发起调用，由 app-server 执行。
 type RentalFundServiceServer interface {
-	// 管理员按订单手工退租金或退押金。
-	ManualRefund(context.Context, *ManualRefundRequest) (*ManualRefundResponse, error)
+	// 按 refundType 处理。rental 退租金，deposit 退押金。
+	OrderFundHandle(context.Context, *ManualRefundRequest) (*ManualRefundResponse, error)
 	mustEmbedUnimplementedRentalFundServiceServer()
 }
 
@@ -68,8 +68,8 @@ type RentalFundServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedRentalFundServiceServer struct{}
 
-func (UnimplementedRentalFundServiceServer) ManualRefund(context.Context, *ManualRefundRequest) (*ManualRefundResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ManualRefund not implemented")
+func (UnimplementedRentalFundServiceServer) OrderFundHandle(context.Context, *ManualRefundRequest) (*ManualRefundResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method OrderFundHandle not implemented")
 }
 func (UnimplementedRentalFundServiceServer) mustEmbedUnimplementedRentalFundServiceServer() {}
 func (UnimplementedRentalFundServiceServer) testEmbeddedByValue()                           {}
@@ -92,20 +92,20 @@ func RegisterRentalFundServiceServer(s grpc.ServiceRegistrar, srv RentalFundServ
 	s.RegisterService(&RentalFundService_ServiceDesc, srv)
 }
 
-func _RentalFundService_ManualRefund_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _RentalFundService_OrderFundHandle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ManualRefundRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RentalFundServiceServer).ManualRefund(ctx, in)
+		return srv.(RentalFundServiceServer).OrderFundHandle(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RentalFundService_ManualRefund_FullMethodName,
+		FullMethod: RentalFundService_OrderFundHandle_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RentalFundServiceServer).ManualRefund(ctx, req.(*ManualRefundRequest))
+		return srv.(RentalFundServiceServer).OrderFundHandle(ctx, req.(*ManualRefundRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -114,14 +114,14 @@ func _RentalFundService_ManualRefund_Handler(srv interface{}, ctx context.Contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var RentalFundService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "rentalfund.RentalFundService",
+	ServiceName: "rentalorder.RentalFundService",
 	HandlerType: (*RentalFundServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ManualRefund",
-			Handler:    _RentalFundService_ManualRefund_Handler,
+			MethodName: "OrderFundHandle",
+			Handler:    _RentalFundService_OrderFundHandle_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "rental_fund.proto",
+	Metadata: "rental_order_handle.proto",
 }

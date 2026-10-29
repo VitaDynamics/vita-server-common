@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v5.29.3
-// source: rental_fund.proto
+// source: rental_order_handle.proto
 
-package rentalfund
+package rentalorder
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -25,8 +25,9 @@ type ManualRefundRequest struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	OrderId uint64                 `protobuf:"varint,1,opt,name=orderId,proto3" json:"orderId,omitempty"`
 	// rental 退租金，deposit 退押金。
+	// deposit 且未带 paymentId 时只使用 orderId：收回设备后退押金，仍有待补缴时不退押金。
 	RefundType string `protobuf:"bytes,2,opt,name=refundType,proto3" json:"refundType,omitempty"`
-	// 退款金额，单位分。
+	// 退款金额，单位分。退租金或按原交易退押金时必填。
 	RefundAmount uint64 `protobuf:"varint,3,opt,name=refundAmount,proto3" json:"refundAmount,omitempty"`
 	// 退款原因。
 	Reason string `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
@@ -34,7 +35,7 @@ type ManualRefundRequest struct {
 	Remark string `protobuf:"bytes,5,opt,name=remark,proto3" json:"remark,omitempty"`
 	// 操作人 ID。
 	OperatorId string `protobuf:"bytes,6,opt,name=operatorId,proto3" json:"operatorId,omitempty"`
-	// 云平台已选定的原支付或冻结交易。
+	// 云平台已选定的原支付或冻结交易。收回后退押金时不填。
 	PaymentId     uint64 `protobuf:"varint,7,opt,name=paymentId,proto3" json:"paymentId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -42,7 +43,7 @@ type ManualRefundRequest struct {
 
 func (x *ManualRefundRequest) Reset() {
 	*x = ManualRefundRequest{}
-	mi := &file_rental_fund_proto_msgTypes[0]
+	mi := &file_rental_order_handle_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -54,7 +55,7 @@ func (x *ManualRefundRequest) String() string {
 func (*ManualRefundRequest) ProtoMessage() {}
 
 func (x *ManualRefundRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rental_fund_proto_msgTypes[0]
+	mi := &file_rental_order_handle_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -67,7 +68,7 @@ func (x *ManualRefundRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ManualRefundRequest.ProtoReflect.Descriptor instead.
 func (*ManualRefundRequest) Descriptor() ([]byte, []int) {
-	return file_rental_fund_proto_rawDescGZIP(), []int{0}
+	return file_rental_order_handle_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ManualRefundRequest) GetOrderId() uint64 {
@@ -133,7 +134,7 @@ type ManualRefundResponse struct {
 
 func (x *ManualRefundResponse) Reset() {
 	*x = ManualRefundResponse{}
-	mi := &file_rental_fund_proto_msgTypes[1]
+	mi := &file_rental_order_handle_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -145,7 +146,7 @@ func (x *ManualRefundResponse) String() string {
 func (*ManualRefundResponse) ProtoMessage() {}
 
 func (x *ManualRefundResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rental_fund_proto_msgTypes[1]
+	mi := &file_rental_order_handle_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -158,7 +159,7 @@ func (x *ManualRefundResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ManualRefundResponse.ProtoReflect.Descriptor instead.
 func (*ManualRefundResponse) Descriptor() ([]byte, []int) {
-	return file_rental_fund_proto_rawDescGZIP(), []int{1}
+	return file_rental_order_handle_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ManualRefundResponse) GetStatus() int32 {
@@ -199,7 +200,7 @@ type ManualRefundResult struct {
 
 func (x *ManualRefundResult) Reset() {
 	*x = ManualRefundResult{}
-	mi := &file_rental_fund_proto_msgTypes[2]
+	mi := &file_rental_order_handle_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -211,7 +212,7 @@ func (x *ManualRefundResult) String() string {
 func (*ManualRefundResult) ProtoMessage() {}
 
 func (x *ManualRefundResult) ProtoReflect() protoreflect.Message {
-	mi := &file_rental_fund_proto_msgTypes[2]
+	mi := &file_rental_order_handle_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -224,7 +225,7 @@ func (x *ManualRefundResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ManualRefundResult.ProtoReflect.Descriptor instead.
 func (*ManualRefundResult) Descriptor() ([]byte, []int) {
-	return file_rental_fund_proto_rawDescGZIP(), []int{2}
+	return file_rental_order_handle_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ManualRefundResult) GetRefundId() uint64 {
@@ -269,12 +270,11 @@ func (x *ManualRefundResult) GetCreatedAt() string {
 	return ""
 }
 
-var File_rental_fund_proto protoreflect.FileDescriptor
+var File_rental_order_handle_proto protoreflect.FileDescriptor
 
-const file_rental_fund_proto_rawDesc = "" +
+const file_rental_order_handle_proto_rawDesc = "" +
 	"\n" +
-	"\x11rental_fund.proto\x12\n" +
-	"rentalfund\"\xe1\x01\n" +
+	"\x19rental_order_handle.proto\x12\vrentalorder\"\xe1\x01\n" +
 	"\x13ManualRefundRequest\x12\x18\n" +
 	"\aorderId\x18\x01 \x01(\x04R\aorderId\x12\x1e\n" +
 	"\n" +
@@ -286,11 +286,11 @@ const file_rental_fund_proto_rawDesc = "" +
 	"\n" +
 	"operatorId\x18\x06 \x01(\tR\n" +
 	"operatorId\x12\x1c\n" +
-	"\tpaymentId\x18\a \x01(\x04R\tpaymentId\"|\n" +
+	"\tpaymentId\x18\a \x01(\x04R\tpaymentId\"}\n" +
 	"\x14ManualRefundResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\x05R\x06status\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x122\n" +
-	"\x04data\x18\x03 \x01(\v2\x1e.rentalfund.ManualRefundResultR\x04data\"\xd0\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x123\n" +
+	"\x04data\x18\x03 \x01(\v2\x1f.rentalorder.ManualRefundResultR\x04data\"\xd0\x01\n" +
 	"\x12ManualRefundResult\x12\x1a\n" +
 	"\brefundId\x18\x01 \x01(\x04R\brefundId\x12\x18\n" +
 	"\aorderId\x18\x02 \x01(\x04R\aorderId\x12\x1e\n" +
@@ -299,32 +299,32 @@ const file_rental_fund_proto_rawDesc = "" +
 	"refundType\x12\"\n" +
 	"\frefundAmount\x18\x04 \x01(\x04R\frefundAmount\x12\"\n" +
 	"\frefundStatus\x18\x05 \x01(\tR\frefundStatus\x12\x1c\n" +
-	"\tcreatedAt\x18\x06 \x01(\tR\tcreatedAt2f\n" +
-	"\x11RentalFundService\x12Q\n" +
-	"\fManualRefund\x12\x1f.rentalfund.ManualRefundRequest\x1a .rentalfund.ManualRefundResponseB Z\x1eservice//rentalfund;rentalfundb\x06proto3"
+	"\tcreatedAt\x18\x06 \x01(\tR\tcreatedAt2k\n" +
+	"\x11RentalFundService\x12V\n" +
+	"\x0fOrderFundHandle\x12 .rentalorder.ManualRefundRequest\x1a!.rentalorder.ManualRefundResponseB\"Z service//rentalorder;rentalorderb\x06proto3"
 
 var (
-	file_rental_fund_proto_rawDescOnce sync.Once
-	file_rental_fund_proto_rawDescData []byte
+	file_rental_order_handle_proto_rawDescOnce sync.Once
+	file_rental_order_handle_proto_rawDescData []byte
 )
 
-func file_rental_fund_proto_rawDescGZIP() []byte {
-	file_rental_fund_proto_rawDescOnce.Do(func() {
-		file_rental_fund_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_rental_fund_proto_rawDesc), len(file_rental_fund_proto_rawDesc)))
+func file_rental_order_handle_proto_rawDescGZIP() []byte {
+	file_rental_order_handle_proto_rawDescOnce.Do(func() {
+		file_rental_order_handle_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_rental_order_handle_proto_rawDesc), len(file_rental_order_handle_proto_rawDesc)))
 	})
-	return file_rental_fund_proto_rawDescData
+	return file_rental_order_handle_proto_rawDescData
 }
 
-var file_rental_fund_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_rental_fund_proto_goTypes = []any{
-	(*ManualRefundRequest)(nil),  // 0: rentalfund.ManualRefundRequest
-	(*ManualRefundResponse)(nil), // 1: rentalfund.ManualRefundResponse
-	(*ManualRefundResult)(nil),   // 2: rentalfund.ManualRefundResult
+var file_rental_order_handle_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_rental_order_handle_proto_goTypes = []any{
+	(*ManualRefundRequest)(nil),  // 0: rentalorder.ManualRefundRequest
+	(*ManualRefundResponse)(nil), // 1: rentalorder.ManualRefundResponse
+	(*ManualRefundResult)(nil),   // 2: rentalorder.ManualRefundResult
 }
-var file_rental_fund_proto_depIdxs = []int32{
-	2, // 0: rentalfund.ManualRefundResponse.data:type_name -> rentalfund.ManualRefundResult
-	0, // 1: rentalfund.RentalFundService.ManualRefund:input_type -> rentalfund.ManualRefundRequest
-	1, // 2: rentalfund.RentalFundService.ManualRefund:output_type -> rentalfund.ManualRefundResponse
+var file_rental_order_handle_proto_depIdxs = []int32{
+	2, // 0: rentalorder.ManualRefundResponse.data:type_name -> rentalorder.ManualRefundResult
+	0, // 1: rentalorder.RentalFundService.OrderFundHandle:input_type -> rentalorder.ManualRefundRequest
+	1, // 2: rentalorder.RentalFundService.OrderFundHandle:output_type -> rentalorder.ManualRefundResponse
 	2, // [2:3] is the sub-list for method output_type
 	1, // [1:2] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -332,26 +332,26 @@ var file_rental_fund_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_rental_fund_proto_init() }
-func file_rental_fund_proto_init() {
-	if File_rental_fund_proto != nil {
+func init() { file_rental_order_handle_proto_init() }
+func file_rental_order_handle_proto_init() {
+	if File_rental_order_handle_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_rental_fund_proto_rawDesc), len(file_rental_fund_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_rental_order_handle_proto_rawDesc), len(file_rental_order_handle_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_rental_fund_proto_goTypes,
-		DependencyIndexes: file_rental_fund_proto_depIdxs,
-		MessageInfos:      file_rental_fund_proto_msgTypes,
+		GoTypes:           file_rental_order_handle_proto_goTypes,
+		DependencyIndexes: file_rental_order_handle_proto_depIdxs,
+		MessageInfos:      file_rental_order_handle_proto_msgTypes,
 	}.Build()
-	File_rental_fund_proto = out.File
-	file_rental_fund_proto_goTypes = nil
-	file_rental_fund_proto_depIdxs = nil
+	File_rental_order_handle_proto = out.File
+	file_rental_order_handle_proto_goTypes = nil
+	file_rental_order_handle_proto_depIdxs = nil
 }
