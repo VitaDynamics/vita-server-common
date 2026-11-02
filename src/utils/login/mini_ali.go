@@ -11,6 +11,9 @@ import (
 	"github.com/smartwalle/alipay/v3"
 )
 
+// 支付宝接口 timestamp 按北京时间传参
+var alipayLocation = time.FixedZone("CST", 8*3600)
+
 // MiniAlipayLoginClient 支付宝小程序登录客户端，初始化需解析密钥，业务层应复用同一实例
 type MiniAlipayLoginClient struct {
 	client *alipay.Client
@@ -33,7 +36,8 @@ func NewMiniAlipayLoginClient(param GenMiniAlipayLoginClientParam) (*MiniAlipayL
 		timeout = defaultMiniTimeout
 	}
 	client, err := alipay.New(param.AppId, param.PrivateKey, param.Production,
-		alipay.WithHTTPClient(&http.Client{Timeout: timeout}))
+		alipay.WithHTTPClient(&http.Client{Timeout: timeout}),
+		alipay.WithTimeLocation(alipayLocation))
 	if err != nil {
 		return nil, fmt.Errorf("init alipay mini login client failed: %w", err)
 	}

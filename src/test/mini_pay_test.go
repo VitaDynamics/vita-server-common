@@ -147,6 +147,26 @@ func TestMiniWechatParseNotify(t *testing.T) {
 	}
 }
 
+func TestMiniAlipayNotifyIsRefund(t *testing.T) {
+	cases := []struct {
+		name   string
+		notify *pay.MiniAlipayNotify
+		want   bool
+	}{
+		{"nil", nil, false},
+		{"paid", &pay.MiniAlipayNotify{NotifyType: pay.AlipayNotifyTypeTradeStatusSync, TradeStatus: "TRADE_SUCCESS", TotalAmountCent: 3000}, false},
+		{"refund", &pay.MiniAlipayNotify{NotifyType: pay.AlipayNotifyTypeTradeStatusSync, TradeStatus: "TRADE_SUCCESS", OutBizNo: "R1", RefundFeeCent: 1000}, true},
+		{"full refund closed", &pay.MiniAlipayNotify{NotifyType: pay.AlipayNotifyTypeTradeStatusSync, TradeStatus: "TRADE_CLOSED", OutBizNo: "R1", RefundFeeCent: 3000}, true},
+		{"out_biz_no without refund_fee", &pay.MiniAlipayNotify{NotifyType: pay.AlipayNotifyTypeTradeStatusSync, OutBizNo: "R1"}, false},
+		{"fund auth", &pay.MiniAlipayNotify{NotifyType: pay.AlipayNotifyTypeFundAuthUnfreeze, OutBizNo: "R1", RefundFeeCent: 1000}, false},
+	}
+	for _, c := range cases {
+		if got := c.notify.IsRefund(); got != c.want {
+			t.Errorf("%s: IsRefund()=%v, want %v", c.name, got, c.want)
+		}
+	}
+}
+
 func TestYuanCentConvert(t *testing.T) {
 	for cent, yuan := range map[int64]string{0: "0.00", 5: "0.05", 3000: "30.00", 12345: "123.45"} {
 		if got := pay.CentToYuan(cent); got != yuan {

@@ -39,6 +39,7 @@ var alipayLocation = time.FixedZone("CST", 8*3600)
 
 // MiniAlipayClient 支付宝小程序支付与资金授权客户端
 type MiniAlipayClient struct {
+	appId     string
 	notifyUrl string
 	client    *alipay.Client
 }
@@ -69,7 +70,7 @@ func NewMiniAlipayClient(param GenMiniAlipayClientParam) (*MiniAlipayClient, err
 	if err = client.LoadAliPayPublicKey(param.PublicKey); err != nil {
 		return nil, fmt.Errorf("load alipay public key failed: %w", err)
 	}
-	return &MiniAlipayClient{notifyUrl: param.NotifyUrl, client: client}, nil
+	return &MiniAlipayClient{appId: param.AppId, notifyUrl: param.NotifyUrl, client: client}, nil
 }
 
 // AlipaySubCode 返回支付宝业务错误的 sub_code，非支付宝业务错误返回空
@@ -361,9 +362,13 @@ type MiniAlipayNotify struct {
 	OutTradeNo      string
 	TradeStatus     string
 	TotalAmountCent int64
-	RefundFeeCent   int64
 	BuyerOpenId     string
 	PayTime         *time.Time
+
+	// 退款同样以 trade_status_sync 通知，OutBizNo 为退款请求号，RefundFeeCent 为该交易累计退款金额
+	OutBizNo      string
+	RefundFeeCent int64
+	RefundTime    *time.Time
 
 	// 资金授权（fund_auth_freeze / fund_auth_unfreeze）
 	AuthNo        string
@@ -392,6 +397,8 @@ func (c *MiniAlipayClient) ParseNotify(ctx context.Context, values url.Values) (
 		TradeStatus:   values.Get("trade_status"),
 		BuyerOpenId:   values.Get("buyer_open_id"),
 		PayTime:       parseAlipayTime(values.Get("gmt_payment")),
+		OutBizNo:      values.Get("out_biz_no"),
+		RefundTime:    parseAlipayTime(values.Get("gmt_refund")),
 		AuthNo:        values.Get("auth_no"),
 		OutOrderNo:    values.Get("out_order_no"),
 		OperationId:   values.Get("operation_id"),
@@ -412,6 +419,11 @@ func (c *MiniAlipayClient) ParseNotify(ctx context.Context, values url.Values) (
 		return nil, err
 	}
 	return notify, nil
+}
+
+// IsRefund 是否为退款触发的交易通知，此时 TradeStatus 可能仍为 TRADE_SUCCESS，不能按支付成功处理
+func (n *MiniAlipayNotify) IsRefund() bool {
+	return n != nil && n.NotifyType == AlipayNotifyTypeTradeStatusSync && strings.TrimSpace(n.OutBizNo) != "" && n.RefundFeeCent > 0
 }
 
 func (c *MiniAlipayClient) notify(override string) string {
