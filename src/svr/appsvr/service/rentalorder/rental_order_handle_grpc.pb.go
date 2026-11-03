@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	RentalFundService_OrderFundHandle_FullMethodName = "/rentalorder.RentalFundService/OrderFundHandle"
+	RentalFundService_ReplaceDevice_FullMethodName   = "/rentalorder.RentalFundService/ReplaceDevice"
 )
 
 // RentalFundServiceClient is the client API for RentalFundService service.
@@ -30,6 +31,8 @@ const (
 type RentalFundServiceClient interface {
 	// 按 refundType 处理。rental 退租金，deposit 退押金。
 	OrderFundHandle(ctx context.Context, in *ManualRefundRequest, opts ...grpc.CallOption) (*ManualRefundResponse, error)
+	// 按订单更换设备。换机逻辑在服务实现中完成。
+	ReplaceDevice(ctx context.Context, in *ReplaceDeviceRequest, opts ...grpc.CallOption) (*ReplaceDeviceResponse, error)
 }
 
 type rentalFundServiceClient struct {
@@ -50,6 +53,16 @@ func (c *rentalFundServiceClient) OrderFundHandle(ctx context.Context, in *Manua
 	return out, nil
 }
 
+func (c *rentalFundServiceClient) ReplaceDevice(ctx context.Context, in *ReplaceDeviceRequest, opts ...grpc.CallOption) (*ReplaceDeviceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReplaceDeviceResponse)
+	err := c.cc.Invoke(ctx, RentalFundService_ReplaceDevice_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RentalFundServiceServer is the server API for RentalFundService service.
 // All implementations must embed UnimplementedRentalFundServiceServer
 // for forward compatibility.
@@ -58,6 +71,8 @@ func (c *rentalFundServiceClient) OrderFundHandle(ctx context.Context, in *Manua
 type RentalFundServiceServer interface {
 	// 按 refundType 处理。rental 退租金，deposit 退押金。
 	OrderFundHandle(context.Context, *ManualRefundRequest) (*ManualRefundResponse, error)
+	// 按订单更换设备。换机逻辑在服务实现中完成。
+	ReplaceDevice(context.Context, *ReplaceDeviceRequest) (*ReplaceDeviceResponse, error)
 	mustEmbedUnimplementedRentalFundServiceServer()
 }
 
@@ -70,6 +85,9 @@ type UnimplementedRentalFundServiceServer struct{}
 
 func (UnimplementedRentalFundServiceServer) OrderFundHandle(context.Context, *ManualRefundRequest) (*ManualRefundResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method OrderFundHandle not implemented")
+}
+func (UnimplementedRentalFundServiceServer) ReplaceDevice(context.Context, *ReplaceDeviceRequest) (*ReplaceDeviceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReplaceDevice not implemented")
 }
 func (UnimplementedRentalFundServiceServer) mustEmbedUnimplementedRentalFundServiceServer() {}
 func (UnimplementedRentalFundServiceServer) testEmbeddedByValue()                           {}
@@ -110,6 +128,24 @@ func _RentalFundService_OrderFundHandle_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RentalFundService_ReplaceDevice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReplaceDeviceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RentalFundServiceServer).ReplaceDevice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RentalFundService_ReplaceDevice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RentalFundServiceServer).ReplaceDevice(ctx, req.(*ReplaceDeviceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RentalFundService_ServiceDesc is the grpc.ServiceDesc for RentalFundService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -120,6 +156,10 @@ var RentalFundService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "OrderFundHandle",
 			Handler:    _RentalFundService_OrderFundHandle_Handler,
+		},
+		{
+			MethodName: "ReplaceDevice",
+			Handler:    _RentalFundService_ReplaceDevice_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

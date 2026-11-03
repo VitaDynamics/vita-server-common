@@ -8,6 +8,24 @@ option go_package = "service//rentalorder;rentalorder";
 service RentalFundService {
   // 按 refundType 处理。rental 退租金，deposit 退押金。
   rpc OrderFundHandle(ManualRefundRequest) returns (ManualRefundResponse);
+
+  // 按订单更换设备。换机逻辑在服务实现中完成。
+  rpc ReplaceDevice(ReplaceDeviceRequest) returns (ReplaceDeviceResponse);
+}
+
+message ReplaceDeviceRequest {
+  uint64 orderId = 1;
+
+  // 目标设备 SN。
+  string targetSn = 2;
+}
+
+message ReplaceDeviceResponse {
+  // 状态码：0 成功，其他失败。
+  int32 status = 1;
+
+  // 结果说明。
+  string message = 2;
 }
 
 message ManualRefundRequest {

@@ -21,6 +21,113 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ReplaceDeviceRequest struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	OrderId uint64                 `protobuf:"varint,1,opt,name=orderId,proto3" json:"orderId,omitempty"`
+	// 目标设备 SN。
+	TargetSn      string `protobuf:"bytes,2,opt,name=targetSn,proto3" json:"targetSn,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReplaceDeviceRequest) Reset() {
+	*x = ReplaceDeviceRequest{}
+	mi := &file_rental_order_handle_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReplaceDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReplaceDeviceRequest) ProtoMessage() {}
+
+func (x *ReplaceDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_rental_order_handle_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReplaceDeviceRequest.ProtoReflect.Descriptor instead.
+func (*ReplaceDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_rental_order_handle_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ReplaceDeviceRequest) GetOrderId() uint64 {
+	if x != nil {
+		return x.OrderId
+	}
+	return 0
+}
+
+func (x *ReplaceDeviceRequest) GetTargetSn() string {
+	if x != nil {
+		return x.TargetSn
+	}
+	return ""
+}
+
+type ReplaceDeviceResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 状态码：0 成功，其他失败。
+	Status int32 `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
+	// 结果说明。
+	Message       string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReplaceDeviceResponse) Reset() {
+	*x = ReplaceDeviceResponse{}
+	mi := &file_rental_order_handle_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReplaceDeviceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReplaceDeviceResponse) ProtoMessage() {}
+
+func (x *ReplaceDeviceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_rental_order_handle_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReplaceDeviceResponse.ProtoReflect.Descriptor instead.
+func (*ReplaceDeviceResponse) Descriptor() ([]byte, []int) {
+	return file_rental_order_handle_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ReplaceDeviceResponse) GetStatus() int32 {
+	if x != nil {
+		return x.Status
+	}
+	return 0
+}
+
+func (x *ReplaceDeviceResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 type ManualRefundRequest struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	OrderId uint64                 `protobuf:"varint,1,opt,name=orderId,proto3" json:"orderId,omitempty"`
@@ -43,7 +150,7 @@ type ManualRefundRequest struct {
 
 func (x *ManualRefundRequest) Reset() {
 	*x = ManualRefundRequest{}
-	mi := &file_rental_order_handle_proto_msgTypes[0]
+	mi := &file_rental_order_handle_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -55,7 +162,7 @@ func (x *ManualRefundRequest) String() string {
 func (*ManualRefundRequest) ProtoMessage() {}
 
 func (x *ManualRefundRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rental_order_handle_proto_msgTypes[0]
+	mi := &file_rental_order_handle_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -68,7 +175,7 @@ func (x *ManualRefundRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ManualRefundRequest.ProtoReflect.Descriptor instead.
 func (*ManualRefundRequest) Descriptor() ([]byte, []int) {
-	return file_rental_order_handle_proto_rawDescGZIP(), []int{0}
+	return file_rental_order_handle_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ManualRefundRequest) GetOrderId() uint64 {
@@ -134,7 +241,7 @@ type ManualRefundResponse struct {
 
 func (x *ManualRefundResponse) Reset() {
 	*x = ManualRefundResponse{}
-	mi := &file_rental_order_handle_proto_msgTypes[1]
+	mi := &file_rental_order_handle_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -146,7 +253,7 @@ func (x *ManualRefundResponse) String() string {
 func (*ManualRefundResponse) ProtoMessage() {}
 
 func (x *ManualRefundResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rental_order_handle_proto_msgTypes[1]
+	mi := &file_rental_order_handle_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -159,7 +266,7 @@ func (x *ManualRefundResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ManualRefundResponse.ProtoReflect.Descriptor instead.
 func (*ManualRefundResponse) Descriptor() ([]byte, []int) {
-	return file_rental_order_handle_proto_rawDescGZIP(), []int{1}
+	return file_rental_order_handle_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ManualRefundResponse) GetStatus() int32 {
@@ -200,7 +307,7 @@ type ManualRefundResult struct {
 
 func (x *ManualRefundResult) Reset() {
 	*x = ManualRefundResult{}
-	mi := &file_rental_order_handle_proto_msgTypes[2]
+	mi := &file_rental_order_handle_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -212,7 +319,7 @@ func (x *ManualRefundResult) String() string {
 func (*ManualRefundResult) ProtoMessage() {}
 
 func (x *ManualRefundResult) ProtoReflect() protoreflect.Message {
-	mi := &file_rental_order_handle_proto_msgTypes[2]
+	mi := &file_rental_order_handle_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -225,7 +332,7 @@ func (x *ManualRefundResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ManualRefundResult.ProtoReflect.Descriptor instead.
 func (*ManualRefundResult) Descriptor() ([]byte, []int) {
-	return file_rental_order_handle_proto_rawDescGZIP(), []int{2}
+	return file_rental_order_handle_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ManualRefundResult) GetRefundId() uint64 {
@@ -274,7 +381,13 @@ var File_rental_order_handle_proto protoreflect.FileDescriptor
 
 const file_rental_order_handle_proto_rawDesc = "" +
 	"\n" +
-	"\x19rental_order_handle.proto\x12\vrentalorder\"\xe1\x01\n" +
+	"\x19rental_order_handle.proto\x12\vrentalorder\"L\n" +
+	"\x14ReplaceDeviceRequest\x12\x18\n" +
+	"\aorderId\x18\x01 \x01(\x04R\aorderId\x12\x1a\n" +
+	"\btargetSn\x18\x02 \x01(\tR\btargetSn\"I\n" +
+	"\x15ReplaceDeviceResponse\x12\x16\n" +
+	"\x06status\x18\x01 \x01(\x05R\x06status\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xe1\x01\n" +
 	"\x13ManualRefundRequest\x12\x18\n" +
 	"\aorderId\x18\x01 \x01(\x04R\aorderId\x12\x1e\n" +
 	"\n" +
@@ -299,9 +412,10 @@ const file_rental_order_handle_proto_rawDesc = "" +
 	"refundType\x12\"\n" +
 	"\frefundAmount\x18\x04 \x01(\x04R\frefundAmount\x12\"\n" +
 	"\frefundStatus\x18\x05 \x01(\tR\frefundStatus\x12\x1c\n" +
-	"\tcreatedAt\x18\x06 \x01(\tR\tcreatedAt2k\n" +
+	"\tcreatedAt\x18\x06 \x01(\tR\tcreatedAt2\xc3\x01\n" +
 	"\x11RentalFundService\x12V\n" +
-	"\x0fOrderFundHandle\x12 .rentalorder.ManualRefundRequest\x1a!.rentalorder.ManualRefundResponseB\"Z service//rentalorder;rentalorderb\x06proto3"
+	"\x0fOrderFundHandle\x12 .rentalorder.ManualRefundRequest\x1a!.rentalorder.ManualRefundResponse\x12V\n" +
+	"\rReplaceDevice\x12!.rentalorder.ReplaceDeviceRequest\x1a\".rentalorder.ReplaceDeviceResponseB\"Z service//rentalorder;rentalorderb\x06proto3"
 
 var (
 	file_rental_order_handle_proto_rawDescOnce sync.Once
@@ -315,18 +429,22 @@ func file_rental_order_handle_proto_rawDescGZIP() []byte {
 	return file_rental_order_handle_proto_rawDescData
 }
 
-var file_rental_order_handle_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_rental_order_handle_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_rental_order_handle_proto_goTypes = []any{
-	(*ManualRefundRequest)(nil),  // 0: rentalorder.ManualRefundRequest
-	(*ManualRefundResponse)(nil), // 1: rentalorder.ManualRefundResponse
-	(*ManualRefundResult)(nil),   // 2: rentalorder.ManualRefundResult
+	(*ReplaceDeviceRequest)(nil),  // 0: rentalorder.ReplaceDeviceRequest
+	(*ReplaceDeviceResponse)(nil), // 1: rentalorder.ReplaceDeviceResponse
+	(*ManualRefundRequest)(nil),   // 2: rentalorder.ManualRefundRequest
+	(*ManualRefundResponse)(nil),  // 3: rentalorder.ManualRefundResponse
+	(*ManualRefundResult)(nil),    // 4: rentalorder.ManualRefundResult
 }
 var file_rental_order_handle_proto_depIdxs = []int32{
-	2, // 0: rentalorder.ManualRefundResponse.data:type_name -> rentalorder.ManualRefundResult
-	0, // 1: rentalorder.RentalFundService.OrderFundHandle:input_type -> rentalorder.ManualRefundRequest
-	1, // 2: rentalorder.RentalFundService.OrderFundHandle:output_type -> rentalorder.ManualRefundResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
+	4, // 0: rentalorder.ManualRefundResponse.data:type_name -> rentalorder.ManualRefundResult
+	2, // 1: rentalorder.RentalFundService.OrderFundHandle:input_type -> rentalorder.ManualRefundRequest
+	0, // 2: rentalorder.RentalFundService.ReplaceDevice:input_type -> rentalorder.ReplaceDeviceRequest
+	3, // 3: rentalorder.RentalFundService.OrderFundHandle:output_type -> rentalorder.ManualRefundResponse
+	1, // 4: rentalorder.RentalFundService.ReplaceDevice:output_type -> rentalorder.ReplaceDeviceResponse
+	3, // [3:5] is the sub-list for method output_type
+	1, // [1:3] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -343,7 +461,7 @@ func file_rental_order_handle_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_rental_order_handle_proto_rawDesc), len(file_rental_order_handle_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
