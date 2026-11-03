@@ -11,6 +11,9 @@ service UserAndDeviceQueryService {
   // 按手机号查询用户基础信息。
   rpc QueryUserBasicInfo(QueryUserBasicInfoRequest) returns (QueryUserBasicInfoResponse);
 
+  // 按手机号、userId 或设备 SN 批量查询用户基础信息。
+  rpc BatchQueryUserBasicInfo(BatchQueryUserBasicInfoRequest) returns (BatchQueryUserBasicInfoResponse);
+
   // 按手机号与设备 SN 查询设备成长监控数据（对接 GetGrowthSummary）。
   rpc QueryDeviceGrowthSummary(QueryDeviceGrowthSummaryRequest) returns (QueryDeviceGrowthSummaryResponse);
 }
@@ -87,6 +90,39 @@ message QueryUserBasicInfoResponse {
 
   // 用户基础信息。
   UserBasicInfo data = 3;
+}
+
+// UserBasicQueryType 批量查询用户基础信息时使用的条件类型。
+enum UserBasicQueryType {
+  USER_BASIC_QUERY_TYPE_UNSPECIFIED = 0;
+  USER_BASIC_QUERY_TYPE_PHONE = 1;
+  USER_BASIC_QUERY_TYPE_USER_ID = 2;
+  USER_BASIC_QUERY_TYPE_DEVICE_SN = 3;
+}
+
+message BatchQueryUserBasicInfoRequest {
+  // 查询类型。决定本次按哪一类条件查询，只读取对应列表。
+  UserBasicQueryType type = 1;
+
+  // 用户手机号列表。type 为 PHONE 时填写，最多 200 个。
+  repeated string phones = 2;
+
+  // 用户 user_id 列表。type 为 USER_ID 时填写，最多 200 个。
+  repeated string userIds = 3;
+
+  // 设备 SN 列表。type 为 DEVICE_SN 时按当前绑定用户查询，最多 200 个。
+  repeated string deviceSns = 4;
+}
+
+message BatchQueryUserBasicInfoResponse {
+  // 状态码：0 成功，其他失败。
+  int32 status = 1;
+
+  // 结果说明。
+  string message = 2;
+
+  // 命中的用户基础信息。未查到的条件不返回，同一用户只出现一次。
+  repeated UserBasicInfo data = 3;
 }
 
 message UserBasicInfo {

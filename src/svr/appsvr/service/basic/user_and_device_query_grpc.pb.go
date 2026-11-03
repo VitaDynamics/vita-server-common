@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	UserAndDeviceQueryService_QueryDeviceBindInfo_FullMethodName      = "/basicquery.UserAndDeviceQueryService/QueryDeviceBindInfo"
 	UserAndDeviceQueryService_QueryUserBasicInfo_FullMethodName       = "/basicquery.UserAndDeviceQueryService/QueryUserBasicInfo"
+	UserAndDeviceQueryService_BatchQueryUserBasicInfo_FullMethodName  = "/basicquery.UserAndDeviceQueryService/BatchQueryUserBasicInfo"
 	UserAndDeviceQueryService_QueryDeviceGrowthSummary_FullMethodName = "/basicquery.UserAndDeviceQueryService/QueryDeviceGrowthSummary"
 )
 
@@ -32,6 +33,8 @@ type UserAndDeviceQueryServiceClient interface {
 	QueryDeviceBindInfo(ctx context.Context, in *QueryDeviceBindInfoRequest, opts ...grpc.CallOption) (*QueryDeviceBindInfoResponse, error)
 	// 按手机号查询用户基础信息。
 	QueryUserBasicInfo(ctx context.Context, in *QueryUserBasicInfoRequest, opts ...grpc.CallOption) (*QueryUserBasicInfoResponse, error)
+	// 按手机号、userId 或设备 SN 批量查询用户基础信息。
+	BatchQueryUserBasicInfo(ctx context.Context, in *BatchQueryUserBasicInfoRequest, opts ...grpc.CallOption) (*BatchQueryUserBasicInfoResponse, error)
 	// 按手机号与设备 SN 查询设备成长监控数据（对接 GetGrowthSummary）。
 	QueryDeviceGrowthSummary(ctx context.Context, in *QueryDeviceGrowthSummaryRequest, opts ...grpc.CallOption) (*QueryDeviceGrowthSummaryResponse, error)
 }
@@ -64,6 +67,16 @@ func (c *userAndDeviceQueryServiceClient) QueryUserBasicInfo(ctx context.Context
 	return out, nil
 }
 
+func (c *userAndDeviceQueryServiceClient) BatchQueryUserBasicInfo(ctx context.Context, in *BatchQueryUserBasicInfoRequest, opts ...grpc.CallOption) (*BatchQueryUserBasicInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BatchQueryUserBasicInfoResponse)
+	err := c.cc.Invoke(ctx, UserAndDeviceQueryService_BatchQueryUserBasicInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userAndDeviceQueryServiceClient) QueryDeviceGrowthSummary(ctx context.Context, in *QueryDeviceGrowthSummaryRequest, opts ...grpc.CallOption) (*QueryDeviceGrowthSummaryResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(QueryDeviceGrowthSummaryResponse)
@@ -82,6 +95,8 @@ type UserAndDeviceQueryServiceServer interface {
 	QueryDeviceBindInfo(context.Context, *QueryDeviceBindInfoRequest) (*QueryDeviceBindInfoResponse, error)
 	// 按手机号查询用户基础信息。
 	QueryUserBasicInfo(context.Context, *QueryUserBasicInfoRequest) (*QueryUserBasicInfoResponse, error)
+	// 按手机号、userId 或设备 SN 批量查询用户基础信息。
+	BatchQueryUserBasicInfo(context.Context, *BatchQueryUserBasicInfoRequest) (*BatchQueryUserBasicInfoResponse, error)
 	// 按手机号与设备 SN 查询设备成长监控数据（对接 GetGrowthSummary）。
 	QueryDeviceGrowthSummary(context.Context, *QueryDeviceGrowthSummaryRequest) (*QueryDeviceGrowthSummaryResponse, error)
 	mustEmbedUnimplementedUserAndDeviceQueryServiceServer()
@@ -99,6 +114,9 @@ func (UnimplementedUserAndDeviceQueryServiceServer) QueryDeviceBindInfo(context.
 }
 func (UnimplementedUserAndDeviceQueryServiceServer) QueryUserBasicInfo(context.Context, *QueryUserBasicInfoRequest) (*QueryUserBasicInfoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method QueryUserBasicInfo not implemented")
+}
+func (UnimplementedUserAndDeviceQueryServiceServer) BatchQueryUserBasicInfo(context.Context, *BatchQueryUserBasicInfoRequest) (*BatchQueryUserBasicInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method BatchQueryUserBasicInfo not implemented")
 }
 func (UnimplementedUserAndDeviceQueryServiceServer) QueryDeviceGrowthSummary(context.Context, *QueryDeviceGrowthSummaryRequest) (*QueryDeviceGrowthSummaryResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method QueryDeviceGrowthSummary not implemented")
@@ -161,6 +179,24 @@ func _UserAndDeviceQueryService_QueryUserBasicInfo_Handler(srv interface{}, ctx 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserAndDeviceQueryService_BatchQueryUserBasicInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchQueryUserBasicInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserAndDeviceQueryServiceServer).BatchQueryUserBasicInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserAndDeviceQueryService_BatchQueryUserBasicInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserAndDeviceQueryServiceServer).BatchQueryUserBasicInfo(ctx, req.(*BatchQueryUserBasicInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserAndDeviceQueryService_QueryDeviceGrowthSummary_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryDeviceGrowthSummaryRequest)
 	if err := dec(in); err != nil {
@@ -193,6 +229,10 @@ var UserAndDeviceQueryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QueryUserBasicInfo",
 			Handler:    _UserAndDeviceQueryService_QueryUserBasicInfo_Handler,
+		},
+		{
+			MethodName: "BatchQueryUserBasicInfo",
+			Handler:    _UserAndDeviceQueryService_BatchQueryUserBasicInfo_Handler,
 		},
 		{
 			MethodName: "QueryDeviceGrowthSummary",
