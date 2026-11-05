@@ -80,13 +80,14 @@ message UpdateDeviceAliasResponse {
 }
 
 // UpdateDeviceRequest 更新设备。snNumber 与 deviceId 至少传一个。
-// updateType 为 owner 时更新 owner，为 bindStatus 时更新绑定状态。
+// updateType 为 owner 时只更新 owner，为 bindStatus 时只更新绑定状态，为 ownerAndBindStatus 时同时更新。
+// owner 为空表示清空所有者。bindStatus 为 0 表示已绑定，为 1 表示未绑定。
 message UpdateDeviceRequest {
   string snNumber = 1;   // 设备序列号
   string deviceId = 2;   // 设备 ID
-  string owner = 3;      // 所有者。updateType 为 owner 时使用
-  string bindStatus = 4; // 绑定状态。updateType 为 bindStatus 时使用
-  string updateType = 5; // owner 更新所有者，bindStatus 更新绑定状态
+  string owner = 3;      // 所有者。updateType 含 owner 时使用，空字符串表示清空
+  string bindStatus = 4; // 绑定状态。updateType 含 bindStatus 时使用，0 已绑定，1 未绑定
+  string updateType = 5; // owner、bindStatus、ownerAndBindStatus
 }
 
 // UpdateDeviceResponse 更新设备响应
@@ -101,6 +102,6 @@ service DeviceService {
   rpc SearchDevicesByCondition(SearchDevicesRequest) returns (GetDevicesInfoListResponse);
   // 根据 SN、deviceId 修改设备别名
   rpc UpdateDeviceAlias(UpdateDeviceAliasRequest) returns (UpdateDeviceAliasResponse);
-  // 按 updateType 更新设备。owner 更新所有者，bindStatus 更新绑定状态。
+  // 按 updateType 更新设备。ownerAndBindStatus 同时更新所有者和绑定状态。
   rpc UpdateDevice(UpdateDeviceRequest) returns (UpdateDeviceResponse);
 }

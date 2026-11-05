@@ -616,14 +616,15 @@ func (x *UpdateDeviceAliasResponse) GetDevice() *DeviceInfo {
 }
 
 // UpdateDeviceRequest 更新设备。snNumber 与 deviceId 至少传一个。
-// updateType 为 owner 时更新 owner，为 bindStatus 时更新绑定状态。
+// updateType 为 owner 时只更新 owner，为 bindStatus 时只更新绑定状态，为 ownerAndBindStatus 时同时更新。
+// owner 为空表示清空所有者。bindStatus 为 0 表示已绑定，为 1 表示未绑定。
 type UpdateDeviceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SnNumber      string                 `protobuf:"bytes,1,opt,name=snNumber,proto3" json:"snNumber,omitempty"`     // 设备序列号
 	DeviceId      string                 `protobuf:"bytes,2,opt,name=deviceId,proto3" json:"deviceId,omitempty"`     // 设备 ID
-	Owner         string                 `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`           // 所有者。updateType 为 owner 时使用
-	BindStatus    string                 `protobuf:"bytes,4,opt,name=bindStatus,proto3" json:"bindStatus,omitempty"` // 绑定状态。updateType 为 bindStatus 时使用
-	UpdateType    string                 `protobuf:"bytes,5,opt,name=updateType,proto3" json:"updateType,omitempty"` // owner 更新所有者，bindStatus 更新绑定状态
+	Owner         string                 `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`           // 所有者。updateType 含 owner 时使用，空字符串表示清空
+	BindStatus    string                 `protobuf:"bytes,4,opt,name=bindStatus,proto3" json:"bindStatus,omitempty"` // 绑定状态。0 已绑定，1 未绑定
+	UpdateType    string                 `protobuf:"bytes,5,opt,name=updateType,proto3" json:"updateType,omitempty"` // owner、bindStatus、ownerAndBindStatus
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
