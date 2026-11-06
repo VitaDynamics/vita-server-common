@@ -21,27 +21,23 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// DeviceBindStatus 设备绑定状态。与云平台 UpdateDevice 使用同一套取值。
-// App 库 bind_status 为 tinyint：0 已绑定、1 未绑定，服务端映射到本枚举，不原样透传。
+// DeviceBindStatus 设备绑定状态。与 app_user_device_bind.bind_status 一致，原样返回。
 type DeviceBindStatus int32
 
 const (
-	DeviceBindStatus_DEVICE_BIND_STATUS_UNSPECIFIED DeviceBindStatus = 0
-	DeviceBindStatus_DEVICE_BIND_STATUS_BOUND       DeviceBindStatus = 1 // 已绑定
-	DeviceBindStatus_DEVICE_BIND_STATUS_UNBOUND     DeviceBindStatus = 2 // 未绑定
+	DeviceBindStatus_DEVICE_BIND_STATUS_BOUND   DeviceBindStatus = 0 // 已绑定
+	DeviceBindStatus_DEVICE_BIND_STATUS_UNBOUND DeviceBindStatus = 1 // 未绑定
 )
 
 // Enum value maps for DeviceBindStatus.
 var (
 	DeviceBindStatus_name = map[int32]string{
-		0: "DEVICE_BIND_STATUS_UNSPECIFIED",
-		1: "DEVICE_BIND_STATUS_BOUND",
-		2: "DEVICE_BIND_STATUS_UNBOUND",
+		0: "DEVICE_BIND_STATUS_BOUND",
+		1: "DEVICE_BIND_STATUS_UNBOUND",
 	}
 	DeviceBindStatus_value = map[string]int32{
-		"DEVICE_BIND_STATUS_UNSPECIFIED": 0,
-		"DEVICE_BIND_STATUS_BOUND":       1,
-		"DEVICE_BIND_STATUS_UNBOUND":     2,
+		"DEVICE_BIND_STATUS_BOUND":   0,
+		"DEVICE_BIND_STATUS_UNBOUND": 1,
 	}
 )
 
@@ -269,7 +265,7 @@ type DeviceBindInfo struct {
 	DeviceAlias string `protobuf:"bytes,6,opt,name=deviceAlias,proto3" json:"deviceAlias,omitempty"`
 	// 绑定角色。
 	Role int32 `protobuf:"varint,7,opt,name=role,proto3" json:"role,omitempty"`
-	// 绑定状态。
+	// 绑定状态。0 已绑定，1 未绑定。
 	BindStatus DeviceBindStatus `protobuf:"varint,8,opt,name=bindStatus,proto3,enum=basicquery.DeviceBindStatus" json:"bindStatus,omitempty"`
 	// 绑定时间戳，毫秒。
 	BindTime int64 `protobuf:"varint,9,opt,name=bindTime,proto3" json:"bindTime,omitempty"`
@@ -362,7 +358,7 @@ func (x *DeviceBindInfo) GetBindStatus() DeviceBindStatus {
 	if x != nil {
 		return x.BindStatus
 	}
-	return DeviceBindStatus_DEVICE_BIND_STATUS_UNSPECIFIED
+	return DeviceBindStatus_DEVICE_BIND_STATUS_BOUND
 }
 
 func (x *DeviceBindInfo) GetBindTime() int64 {
@@ -1180,11 +1176,10 @@ const file_user_and_device_query_proto_rawDesc = "" +
 	"\vtotalNumber\x18\x02 \x01(\x01R\vtotalNumber\x12 \n" +
 	"\vtodayNumber\x18\x03 \x01(\x01R\vtodayNumber\x12\x1c\n" +
 	"\ttotalText\x18\x04 \x01(\tR\ttotalText\x12\x1c\n" +
-	"\ttodayText\x18\x05 \x01(\tR\ttodayText*t\n" +
-	"\x10DeviceBindStatus\x12\"\n" +
-	"\x1eDEVICE_BIND_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
-	"\x18DEVICE_BIND_STATUS_BOUND\x10\x01\x12\x1e\n" +
-	"\x1aDEVICE_BIND_STATUS_UNBOUND\x10\x02*\xa4\x01\n" +
+	"\ttodayText\x18\x05 \x01(\tR\ttodayText*P\n" +
+	"\x10DeviceBindStatus\x12\x1c\n" +
+	"\x18DEVICE_BIND_STATUS_BOUND\x10\x00\x12\x1e\n" +
+	"\x1aDEVICE_BIND_STATUS_UNBOUND\x10\x01*\xa4\x01\n" +
 	"\x12UserBasicQueryType\x12%\n" +
 	"!USER_BASIC_QUERY_TYPE_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bUSER_BASIC_QUERY_TYPE_PHONE\x10\x01\x12!\n" +

@@ -81,27 +81,24 @@ func (QueryType) EnumDescriptor() ([]byte, []int) {
 	return file_device_proto_rawDescGZIP(), []int{0}
 }
 
-// DeviceBindStatus 设备绑定状态。未指定和未知值由服务端拒绝。
-// 落库 devices.status 时 BOUND 写成 "0"，UNBOUND 写成 "1"。
+// DeviceBindStatus 设备绑定状态。与 devices.status、app_user_device_bind.bind_status 一致，原样使用。
+// 未知值由服务端拒绝。未传 bindStatus 时按 proto3 默认值 0，即已绑定。
 type DeviceBindStatus int32
 
 const (
-	DeviceBindStatus_DEVICE_BIND_STATUS_UNSPECIFIED DeviceBindStatus = 0
-	DeviceBindStatus_DEVICE_BIND_STATUS_BOUND       DeviceBindStatus = 1 // 已绑定
-	DeviceBindStatus_DEVICE_BIND_STATUS_UNBOUND     DeviceBindStatus = 2 // 未绑定
+	DeviceBindStatus_DEVICE_BIND_STATUS_BOUND   DeviceBindStatus = 0 // 已绑定
+	DeviceBindStatus_DEVICE_BIND_STATUS_UNBOUND DeviceBindStatus = 1 // 未绑定
 )
 
 // Enum value maps for DeviceBindStatus.
 var (
 	DeviceBindStatus_name = map[int32]string{
-		0: "DEVICE_BIND_STATUS_UNSPECIFIED",
-		1: "DEVICE_BIND_STATUS_BOUND",
-		2: "DEVICE_BIND_STATUS_UNBOUND",
+		0: "DEVICE_BIND_STATUS_BOUND",
+		1: "DEVICE_BIND_STATUS_UNBOUND",
 	}
 	DeviceBindStatus_value = map[string]int32{
-		"DEVICE_BIND_STATUS_UNSPECIFIED": 0,
-		"DEVICE_BIND_STATUS_BOUND":       1,
-		"DEVICE_BIND_STATUS_UNBOUND":     2,
+		"DEVICE_BIND_STATUS_BOUND":   0,
+		"DEVICE_BIND_STATUS_UNBOUND": 1,
 	}
 )
 
@@ -726,7 +723,7 @@ type UpdateDeviceRequest struct {
 	SnNumber      string                 `protobuf:"bytes,1,opt,name=snNumber,proto3" json:"snNumber,omitempty"`                                      // 设备序列号
 	DeviceId      string                 `protobuf:"bytes,2,opt,name=deviceId,proto3" json:"deviceId,omitempty"`                                      // 设备 ID
 	Owner         string                 `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`                                            // 所有者。updateType 含 owner 时使用，空字符串表示清空
-	BindStatus    DeviceBindStatus       `protobuf:"varint,4,opt,name=bindStatus,proto3,enum=devicesvr.DeviceBindStatus" json:"bindStatus,omitempty"` // 绑定状态。updateType 含绑定状态时必填
+	BindStatus    DeviceBindStatus       `protobuf:"varint,4,opt,name=bindStatus,proto3,enum=devicesvr.DeviceBindStatus" json:"bindStatus,omitempty"` // 绑定状态。0 已绑定，1 未绑定。updateType 含绑定状态时使用
 	UpdateType    DeviceUpdateType       `protobuf:"varint,5,opt,name=updateType,proto3,enum=devicesvr.DeviceUpdateType" json:"updateType,omitempty"` // 本次更新范围
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -787,7 +784,7 @@ func (x *UpdateDeviceRequest) GetBindStatus() DeviceBindStatus {
 	if x != nil {
 		return x.BindStatus
 	}
-	return DeviceBindStatus_DEVICE_BIND_STATUS_UNSPECIFIED
+	return DeviceBindStatus_DEVICE_BIND_STATUS_BOUND
 }
 
 func (x *UpdateDeviceRequest) GetUpdateType() DeviceUpdateType {
@@ -926,11 +923,10 @@ const file_device_proto_rawDesc = "" +
 	"\x12QUERY_TYPE_BY_NAME\x10\x02\x12\x1d\n" +
 	"\x19QUERY_TYPE_BY_DEVICE_TYPE\x10\x03\x12\x1b\n" +
 	"\x17QUERY_TYPE_BY_DEVICE_ID\x10\x04\x12\x15\n" +
-	"\x11QUERY_TYPE_BY_PID\x10\x05*t\n" +
-	"\x10DeviceBindStatus\x12\"\n" +
-	"\x1eDEVICE_BIND_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
-	"\x18DEVICE_BIND_STATUS_BOUND\x10\x01\x12\x1e\n" +
-	"\x1aDEVICE_BIND_STATUS_UNBOUND\x10\x02*\xa6\x01\n" +
+	"\x11QUERY_TYPE_BY_PID\x10\x05*P\n" +
+	"\x10DeviceBindStatus\x12\x1c\n" +
+	"\x18DEVICE_BIND_STATUS_BOUND\x10\x00\x12\x1e\n" +
+	"\x1aDEVICE_BIND_STATUS_UNBOUND\x10\x01*\xa6\x01\n" +
 	"\x10DeviceUpdateType\x12\"\n" +
 	"\x1eDEVICE_UPDATE_TYPE_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18DEVICE_UPDATE_TYPE_OWNER\x10\x01\x12\"\n" +

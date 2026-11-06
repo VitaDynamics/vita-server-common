@@ -40,12 +40,10 @@ message QueryDeviceBindInfoResponse {
   DeviceBindInfo data = 3;
 }
 
-// DeviceBindStatus 设备绑定状态。与云平台 UpdateDevice 使用同一套取值。
-// App 库 bind_status 为 tinyint：0 已绑定、1 未绑定，服务端映射到本枚举，不原样透传。
+// DeviceBindStatus 设备绑定状态。与 app_user_device_bind.bind_status 一致，原样返回。
 enum DeviceBindStatus {
-  DEVICE_BIND_STATUS_UNSPECIFIED = 0;
-  DEVICE_BIND_STATUS_BOUND = 1;   // 已绑定
-  DEVICE_BIND_STATUS_UNBOUND = 2; // 未绑定
+  DEVICE_BIND_STATUS_BOUND = 0;   // 已绑定
+  DEVICE_BIND_STATUS_UNBOUND = 1; // 未绑定
 }
 
 message DeviceBindInfo {
@@ -70,7 +68,7 @@ message DeviceBindInfo {
   // 绑定角色。
   int32 role = 7;
 
-  // 绑定状态。
+  // 绑定状态。0 已绑定，1 未绑定。
   DeviceBindStatus bindStatus = 8;
 
   // 绑定时间戳，毫秒。

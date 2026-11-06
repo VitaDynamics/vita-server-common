@@ -79,12 +79,11 @@ message UpdateDeviceAliasResponse {
   DeviceInfo device = 1; // 更新后的设备信息
 }
 
-// DeviceBindStatus 设备绑定状态。未指定和未知值由服务端拒绝。
-// 落库 devices.status 时 BOUND 写成 "0"，UNBOUND 写成 "1"。
+// DeviceBindStatus 设备绑定状态。与 devices.status、app_user_device_bind.bind_status 一致，原样使用。
+// 未知值由服务端拒绝。未传 bindStatus 时按 proto3 默认值 0，即已绑定。
 enum DeviceBindStatus {
-  DEVICE_BIND_STATUS_UNSPECIFIED = 0;
-  DEVICE_BIND_STATUS_BOUND = 1;   // 已绑定
-  DEVICE_BIND_STATUS_UNBOUND = 2; // 未绑定
+  DEVICE_BIND_STATUS_BOUND = 0;   // 已绑定
+  DEVICE_BIND_STATUS_UNBOUND = 1; // 未绑定
 }
 
 // DeviceUpdateType 设备更新范围。未指定和未知值由服务端拒绝。
@@ -101,7 +100,7 @@ message UpdateDeviceRequest {
   string snNumber = 1;                  // 设备序列号
   string deviceId = 2;                  // 设备 ID
   string owner = 3;                     // 所有者。updateType 含 owner 时使用，空字符串表示清空
-  DeviceBindStatus bindStatus = 4;      // 绑定状态。updateType 含绑定状态时必填
+  DeviceBindStatus bindStatus = 4;      // 绑定状态。0 已绑定，1 未绑定。updateType 含绑定状态时使用
   DeviceUpdateType updateType = 5;      // 本次更新范围
 }
 
