@@ -528,10 +528,7 @@ func (c *WechatClient) doRequestWithContext(ctx context.Context, method, reqUrl 
 
 	if resp.StatusCode >= 400 {
 		apiErr := &WechatV3APIError{StatusCode: resp.StatusCode, Body: string(respBody)}
-		var e WechatV3Error
-		if json.Unmarshal(respBody, &e) == nil {
-			apiErr.Code, apiErr.Message = e.Code, e.Message
-		}
+		_ = json.Unmarshal(respBody, apiErr)
 		return nil, apiErr
 	}
 
@@ -585,21 +582,12 @@ func (c *WechatClient) SetSerialNo(serialNo string) {
 	c.SerialNo = serialNo
 }
 
-type WechatV3Error struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-}
-
-func (e *WechatV3Error) Error() string {
-	return fmt.Sprintf("%s: %s", e.Code, e.Message)
-}
-
 // WechatV3APIError 微信支付 V3 接口返回 4xx/5xx，Code 为微信错误码（如 ORDER_NOT_EXIST、ORDERPAID）
 type WechatV3APIError struct {
-	StatusCode int
-	Code       string
-	Message    string
-	Body       string
+	StatusCode int    `json:"-"`
+	Code       string `json:"code"`
+	Message    string `json:"message"`
+	Body       string `json:"-"`
 }
 
 func (e *WechatV3APIError) Error() string {
