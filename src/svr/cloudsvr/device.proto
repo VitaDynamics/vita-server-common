@@ -79,6 +79,36 @@ message UpdateDeviceAliasResponse {
   DeviceInfo device = 1; // 更新后的设备信息
 }
 
+// DeviceBindStatus 设备绑定状态。与 devices.status、app_user_device_bind.bind_status 一致，原样使用。
+// 未知值由服务端拒绝。未传 bindStatus 时按 proto3 默认值 0，即已绑定。
+enum DeviceBindStatus {
+  DEVICE_BIND_STATUS_BOUND = 0;   // 已绑定
+  DEVICE_BIND_STATUS_UNBOUND = 1; // 未绑定
+}
+
+// DeviceUpdateType 设备更新范围。未指定和未知值由服务端拒绝。
+enum DeviceUpdateType {
+  DEVICE_UPDATE_TYPE_UNSPECIFIED = 0;
+  DEVICE_UPDATE_TYPE_OWNER = 1;                  // 只更新 owner
+  DEVICE_UPDATE_TYPE_BIND_STATUS = 2;            // 只更新绑定状态
+  DEVICE_UPDATE_TYPE_OWNER_AND_BIND_STATUS = 3;  // 同时更新 owner 和绑定状态
+}
+
+// UpdateDeviceRequest 更新设备。snNumber 与 deviceId 至少传一个。
+// updateType 决定本次写哪些字段。owner 为空且本次更新 owner 时清空所有者。
+message UpdateDeviceRequest {
+  string snNumber = 1;                  // 设备序列号
+  string deviceId = 2;                  // 设备 ID
+  string owner = 3;                     // 所有者。updateType 含 owner 时使用，空字符串表示清空
+  DeviceBindStatus bindStatus = 4;      // 绑定状态。0 已绑定，1 未绑定。updateType 含绑定状态时使用
+  DeviceUpdateType updateType = 5;      // 本次更新范围
+}
+
+// UpdateDeviceResponse 更新设备响应
+message UpdateDeviceResponse {
+  DeviceInfo device = 1; // 更新后的设备信息
+}
+
 service DeviceService {
   // 根据 SN 列表批量查询设备信息
   rpc GetDevicesBySnList(GetDevicesBySnListRequest) returns (GetDevicesInfoListResponse);
@@ -86,4 +116,6 @@ service DeviceService {
   rpc SearchDevicesByCondition(SearchDevicesRequest) returns (GetDevicesInfoListResponse);
   // 根据 SN、deviceId 修改设备别名
   rpc UpdateDeviceAlias(UpdateDeviceAliasRequest) returns (UpdateDeviceAliasResponse);
+  // 按 updateType 更新设备。OWNER_AND_BIND_STATUS 同时更新所有者和绑定状态。
+  rpc UpdateDevice(UpdateDeviceRequest) returns (UpdateDeviceResponse);
 }
