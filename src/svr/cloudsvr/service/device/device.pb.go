@@ -81,6 +81,110 @@ func (QueryType) EnumDescriptor() ([]byte, []int) {
 	return file_device_proto_rawDescGZIP(), []int{0}
 }
 
+// DeviceBindStatus 设备绑定状态。未指定和未知值由服务端拒绝。
+// 落库 devices.status 时 BOUND 写成 "0"，UNBOUND 写成 "1"。
+type DeviceBindStatus int32
+
+const (
+	DeviceBindStatus_DEVICE_BIND_STATUS_UNSPECIFIED DeviceBindStatus = 0
+	DeviceBindStatus_DEVICE_BIND_STATUS_BOUND       DeviceBindStatus = 1 // 已绑定
+	DeviceBindStatus_DEVICE_BIND_STATUS_UNBOUND     DeviceBindStatus = 2 // 未绑定
+)
+
+// Enum value maps for DeviceBindStatus.
+var (
+	DeviceBindStatus_name = map[int32]string{
+		0: "DEVICE_BIND_STATUS_UNSPECIFIED",
+		1: "DEVICE_BIND_STATUS_BOUND",
+		2: "DEVICE_BIND_STATUS_UNBOUND",
+	}
+	DeviceBindStatus_value = map[string]int32{
+		"DEVICE_BIND_STATUS_UNSPECIFIED": 0,
+		"DEVICE_BIND_STATUS_BOUND":       1,
+		"DEVICE_BIND_STATUS_UNBOUND":     2,
+	}
+)
+
+func (x DeviceBindStatus) Enum() *DeviceBindStatus {
+	p := new(DeviceBindStatus)
+	*p = x
+	return p
+}
+
+func (x DeviceBindStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DeviceBindStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_device_proto_enumTypes[1].Descriptor()
+}
+
+func (DeviceBindStatus) Type() protoreflect.EnumType {
+	return &file_device_proto_enumTypes[1]
+}
+
+func (x DeviceBindStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DeviceBindStatus.Descriptor instead.
+func (DeviceBindStatus) EnumDescriptor() ([]byte, []int) {
+	return file_device_proto_rawDescGZIP(), []int{1}
+}
+
+// DeviceUpdateType 设备更新范围。未指定和未知值由服务端拒绝。
+type DeviceUpdateType int32
+
+const (
+	DeviceUpdateType_DEVICE_UPDATE_TYPE_UNSPECIFIED           DeviceUpdateType = 0
+	DeviceUpdateType_DEVICE_UPDATE_TYPE_OWNER                 DeviceUpdateType = 1 // 只更新 owner
+	DeviceUpdateType_DEVICE_UPDATE_TYPE_BIND_STATUS           DeviceUpdateType = 2 // 只更新绑定状态
+	DeviceUpdateType_DEVICE_UPDATE_TYPE_OWNER_AND_BIND_STATUS DeviceUpdateType = 3 // 同时更新 owner 和绑定状态
+)
+
+// Enum value maps for DeviceUpdateType.
+var (
+	DeviceUpdateType_name = map[int32]string{
+		0: "DEVICE_UPDATE_TYPE_UNSPECIFIED",
+		1: "DEVICE_UPDATE_TYPE_OWNER",
+		2: "DEVICE_UPDATE_TYPE_BIND_STATUS",
+		3: "DEVICE_UPDATE_TYPE_OWNER_AND_BIND_STATUS",
+	}
+	DeviceUpdateType_value = map[string]int32{
+		"DEVICE_UPDATE_TYPE_UNSPECIFIED":           0,
+		"DEVICE_UPDATE_TYPE_OWNER":                 1,
+		"DEVICE_UPDATE_TYPE_BIND_STATUS":           2,
+		"DEVICE_UPDATE_TYPE_OWNER_AND_BIND_STATUS": 3,
+	}
+)
+
+func (x DeviceUpdateType) Enum() *DeviceUpdateType {
+	p := new(DeviceUpdateType)
+	*p = x
+	return p
+}
+
+func (x DeviceUpdateType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DeviceUpdateType) Descriptor() protoreflect.EnumDescriptor {
+	return file_device_proto_enumTypes[2].Descriptor()
+}
+
+func (DeviceUpdateType) Type() protoreflect.EnumType {
+	return &file_device_proto_enumTypes[2]
+}
+
+func (x DeviceUpdateType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DeviceUpdateType.Descriptor instead.
+func (DeviceUpdateType) EnumDescriptor() ([]byte, []int) {
+	return file_device_proto_rawDescGZIP(), []int{2}
+}
+
 // GetDevicesBySnListRequest 根据 SN 列表查询设备信息
 type GetDevicesBySnListRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -616,15 +720,14 @@ func (x *UpdateDeviceAliasResponse) GetDevice() *DeviceInfo {
 }
 
 // UpdateDeviceRequest 更新设备。snNumber 与 deviceId 至少传一个。
-// updateType 为 owner 时只更新 owner，为 bindStatus 时只更新绑定状态，为 ownerAndBindStatus 时同时更新。
-// owner 为空表示清空所有者。bindStatus 为 0 表示已绑定，为 1 表示未绑定。
+// updateType 决定本次写哪些字段。owner 为空且本次更新 owner 时清空所有者。
 type UpdateDeviceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SnNumber      string                 `protobuf:"bytes,1,opt,name=snNumber,proto3" json:"snNumber,omitempty"`     // 设备序列号
-	DeviceId      string                 `protobuf:"bytes,2,opt,name=deviceId,proto3" json:"deviceId,omitempty"`     // 设备 ID
-	Owner         string                 `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`           // 所有者。updateType 含 owner 时使用，空字符串表示清空
-	BindStatus    string                 `protobuf:"bytes,4,opt,name=bindStatus,proto3" json:"bindStatus,omitempty"` // 绑定状态。0 已绑定，1 未绑定
-	UpdateType    string                 `protobuf:"bytes,5,opt,name=updateType,proto3" json:"updateType,omitempty"` // owner、bindStatus、ownerAndBindStatus
+	SnNumber      string                 `protobuf:"bytes,1,opt,name=snNumber,proto3" json:"snNumber,omitempty"`                                      // 设备序列号
+	DeviceId      string                 `protobuf:"bytes,2,opt,name=deviceId,proto3" json:"deviceId,omitempty"`                                      // 设备 ID
+	Owner         string                 `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`                                            // 所有者。updateType 含 owner 时使用，空字符串表示清空
+	BindStatus    DeviceBindStatus       `protobuf:"varint,4,opt,name=bindStatus,proto3,enum=devicesvr.DeviceBindStatus" json:"bindStatus,omitempty"` // 绑定状态。updateType 含绑定状态时必填
+	UpdateType    DeviceUpdateType       `protobuf:"varint,5,opt,name=updateType,proto3,enum=devicesvr.DeviceUpdateType" json:"updateType,omitempty"` // 本次更新范围
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -680,18 +783,18 @@ func (x *UpdateDeviceRequest) GetOwner() string {
 	return ""
 }
 
-func (x *UpdateDeviceRequest) GetBindStatus() string {
+func (x *UpdateDeviceRequest) GetBindStatus() DeviceBindStatus {
 	if x != nil {
 		return x.BindStatus
 	}
-	return ""
+	return DeviceBindStatus_DEVICE_BIND_STATUS_UNSPECIFIED
 }
 
-func (x *UpdateDeviceRequest) GetUpdateType() string {
+func (x *UpdateDeviceRequest) GetUpdateType() DeviceUpdateType {
 	if x != nil {
 		return x.UpdateType
 	}
-	return ""
+	return DeviceUpdateType_DEVICE_UPDATE_TYPE_UNSPECIFIED
 }
 
 // UpdateDeviceResponse 更新设备响应
@@ -804,16 +907,16 @@ const file_device_proto_rawDesc = "" +
 	"\bdeviceId\x18\x02 \x01(\tR\bdeviceId\x12\x14\n" +
 	"\x05alias\x18\x03 \x01(\tR\x05alias\"J\n" +
 	"\x19UpdateDeviceAliasResponse\x12-\n" +
-	"\x06device\x18\x01 \x01(\v2\x15.devicesvr.DeviceInfoR\x06device\"\xa3\x01\n" +
+	"\x06device\x18\x01 \x01(\v2\x15.devicesvr.DeviceInfoR\x06device\"\xdd\x01\n" +
 	"\x13UpdateDeviceRequest\x12\x1a\n" +
 	"\bsnNumber\x18\x01 \x01(\tR\bsnNumber\x12\x1a\n" +
 	"\bdeviceId\x18\x02 \x01(\tR\bdeviceId\x12\x14\n" +
-	"\x05owner\x18\x03 \x01(\tR\x05owner\x12\x1e\n" +
+	"\x05owner\x18\x03 \x01(\tR\x05owner\x12;\n" +
 	"\n" +
-	"bindStatus\x18\x04 \x01(\tR\n" +
-	"bindStatus\x12\x1e\n" +
+	"bindStatus\x18\x04 \x01(\x0e2\x1b.devicesvr.DeviceBindStatusR\n" +
+	"bindStatus\x12;\n" +
 	"\n" +
-	"updateType\x18\x05 \x01(\tR\n" +
+	"updateType\x18\x05 \x01(\x0e2\x1b.devicesvr.DeviceUpdateTypeR\n" +
 	"updateType\"E\n" +
 	"\x14UpdateDeviceResponse\x12-\n" +
 	"\x06device\x18\x01 \x01(\v2\x15.devicesvr.DeviceInfoR\x06device*\xa8\x01\n" +
@@ -823,7 +926,16 @@ const file_device_proto_rawDesc = "" +
 	"\x12QUERY_TYPE_BY_NAME\x10\x02\x12\x1d\n" +
 	"\x19QUERY_TYPE_BY_DEVICE_TYPE\x10\x03\x12\x1b\n" +
 	"\x17QUERY_TYPE_BY_DEVICE_ID\x10\x04\x12\x15\n" +
-	"\x11QUERY_TYPE_BY_PID\x10\x052\x87\x03\n" +
+	"\x11QUERY_TYPE_BY_PID\x10\x05*t\n" +
+	"\x10DeviceBindStatus\x12\"\n" +
+	"\x1eDEVICE_BIND_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
+	"\x18DEVICE_BIND_STATUS_BOUND\x10\x01\x12\x1e\n" +
+	"\x1aDEVICE_BIND_STATUS_UNBOUND\x10\x02*\xa6\x01\n" +
+	"\x10DeviceUpdateType\x12\"\n" +
+	"\x1eDEVICE_UPDATE_TYPE_UNSPECIFIED\x10\x00\x12\x1c\n" +
+	"\x18DEVICE_UPDATE_TYPE_OWNER\x10\x01\x12\"\n" +
+	"\x1eDEVICE_UPDATE_TYPE_BIND_STATUS\x10\x02\x12,\n" +
+	"(DEVICE_UPDATE_TYPE_OWNER_AND_BIND_STATUS\x10\x032\x87\x03\n" +
 	"\rDeviceService\x12a\n" +
 	"\x12GetDevicesBySnList\x12$.devicesvr.GetDevicesBySnListRequest\x1a%.devicesvr.GetDevicesInfoListResponse\x12b\n" +
 	"\x18SearchDevicesByCondition\x12\x1f.devicesvr.SearchDevicesRequest\x1a%.devicesvr.GetDevicesInfoListResponse\x12^\n" +
@@ -842,41 +954,45 @@ func file_device_proto_rawDescGZIP() []byte {
 	return file_device_proto_rawDescData
 }
 
-var file_device_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_device_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_device_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_device_proto_goTypes = []any{
 	(QueryType)(0),                     // 0: devicesvr.QueryType
-	(*GetDevicesBySnListRequest)(nil),  // 1: devicesvr.GetDevicesBySnListRequest
-	(*DeviceInfo)(nil),                 // 2: devicesvr.DeviceInfo
-	(*GetDevicesInfoListResponse)(nil), // 3: devicesvr.GetDevicesInfoListResponse
-	(*SearchDevicesRequest)(nil),       // 4: devicesvr.SearchDevicesRequest
-	(*UpdateDeviceAliasRequest)(nil),   // 5: devicesvr.UpdateDeviceAliasRequest
-	(*UpdateDeviceAliasResponse)(nil),  // 6: devicesvr.UpdateDeviceAliasResponse
-	(*UpdateDeviceRequest)(nil),        // 7: devicesvr.UpdateDeviceRequest
-	(*UpdateDeviceResponse)(nil),       // 8: devicesvr.UpdateDeviceResponse
-	(*timestamppb.Timestamp)(nil),      // 9: google.protobuf.Timestamp
+	(DeviceBindStatus)(0),              // 1: devicesvr.DeviceBindStatus
+	(DeviceUpdateType)(0),              // 2: devicesvr.DeviceUpdateType
+	(*GetDevicesBySnListRequest)(nil),  // 3: devicesvr.GetDevicesBySnListRequest
+	(*DeviceInfo)(nil),                 // 4: devicesvr.DeviceInfo
+	(*GetDevicesInfoListResponse)(nil), // 5: devicesvr.GetDevicesInfoListResponse
+	(*SearchDevicesRequest)(nil),       // 6: devicesvr.SearchDevicesRequest
+	(*UpdateDeviceAliasRequest)(nil),   // 7: devicesvr.UpdateDeviceAliasRequest
+	(*UpdateDeviceAliasResponse)(nil),  // 8: devicesvr.UpdateDeviceAliasResponse
+	(*UpdateDeviceRequest)(nil),        // 9: devicesvr.UpdateDeviceRequest
+	(*UpdateDeviceResponse)(nil),       // 10: devicesvr.UpdateDeviceResponse
+	(*timestamppb.Timestamp)(nil),      // 11: google.protobuf.Timestamp
 }
 var file_device_proto_depIdxs = []int32{
-	9,  // 0: devicesvr.DeviceInfo.createTime:type_name -> google.protobuf.Timestamp
-	9,  // 1: devicesvr.DeviceInfo.updateTime:type_name -> google.protobuf.Timestamp
-	9,  // 2: devicesvr.DeviceInfo.lastTime:type_name -> google.protobuf.Timestamp
-	2,  // 3: devicesvr.GetDevicesInfoListResponse.devices:type_name -> devicesvr.DeviceInfo
+	11, // 0: devicesvr.DeviceInfo.createTime:type_name -> google.protobuf.Timestamp
+	11, // 1: devicesvr.DeviceInfo.updateTime:type_name -> google.protobuf.Timestamp
+	11, // 2: devicesvr.DeviceInfo.lastTime:type_name -> google.protobuf.Timestamp
+	4,  // 3: devicesvr.GetDevicesInfoListResponse.devices:type_name -> devicesvr.DeviceInfo
 	0,  // 4: devicesvr.SearchDevicesRequest.queryType:type_name -> devicesvr.QueryType
-	2,  // 5: devicesvr.UpdateDeviceAliasResponse.device:type_name -> devicesvr.DeviceInfo
-	2,  // 6: devicesvr.UpdateDeviceResponse.device:type_name -> devicesvr.DeviceInfo
-	1,  // 7: devicesvr.DeviceService.GetDevicesBySnList:input_type -> devicesvr.GetDevicesBySnListRequest
-	4,  // 8: devicesvr.DeviceService.SearchDevicesByCondition:input_type -> devicesvr.SearchDevicesRequest
-	5,  // 9: devicesvr.DeviceService.UpdateDeviceAlias:input_type -> devicesvr.UpdateDeviceAliasRequest
-	7,  // 10: devicesvr.DeviceService.UpdateDevice:input_type -> devicesvr.UpdateDeviceRequest
-	3,  // 11: devicesvr.DeviceService.GetDevicesBySnList:output_type -> devicesvr.GetDevicesInfoListResponse
-	3,  // 12: devicesvr.DeviceService.SearchDevicesByCondition:output_type -> devicesvr.GetDevicesInfoListResponse
-	6,  // 13: devicesvr.DeviceService.UpdateDeviceAlias:output_type -> devicesvr.UpdateDeviceAliasResponse
-	8,  // 14: devicesvr.DeviceService.UpdateDevice:output_type -> devicesvr.UpdateDeviceResponse
-	11, // [11:15] is the sub-list for method output_type
-	7,  // [7:11] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	4,  // 5: devicesvr.UpdateDeviceAliasResponse.device:type_name -> devicesvr.DeviceInfo
+	1,  // 6: devicesvr.UpdateDeviceRequest.bindStatus:type_name -> devicesvr.DeviceBindStatus
+	2,  // 7: devicesvr.UpdateDeviceRequest.updateType:type_name -> devicesvr.DeviceUpdateType
+	4,  // 8: devicesvr.UpdateDeviceResponse.device:type_name -> devicesvr.DeviceInfo
+	3,  // 9: devicesvr.DeviceService.GetDevicesBySnList:input_type -> devicesvr.GetDevicesBySnListRequest
+	6,  // 10: devicesvr.DeviceService.SearchDevicesByCondition:input_type -> devicesvr.SearchDevicesRequest
+	7,  // 11: devicesvr.DeviceService.UpdateDeviceAlias:input_type -> devicesvr.UpdateDeviceAliasRequest
+	9,  // 12: devicesvr.DeviceService.UpdateDevice:input_type -> devicesvr.UpdateDeviceRequest
+	5,  // 13: devicesvr.DeviceService.GetDevicesBySnList:output_type -> devicesvr.GetDevicesInfoListResponse
+	5,  // 14: devicesvr.DeviceService.SearchDevicesByCondition:output_type -> devicesvr.GetDevicesInfoListResponse
+	8,  // 15: devicesvr.DeviceService.UpdateDeviceAlias:output_type -> devicesvr.UpdateDeviceAliasResponse
+	10, // 16: devicesvr.DeviceService.UpdateDevice:output_type -> devicesvr.UpdateDeviceResponse
+	13, // [13:17] is the sub-list for method output_type
+	9,  // [9:13] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_device_proto_init() }
@@ -889,7 +1005,7 @@ func file_device_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_device_proto_rawDesc), len(file_device_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      3,
 			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,

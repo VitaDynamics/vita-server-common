@@ -35,7 +35,7 @@ type DeviceServiceClient interface {
 	SearchDevicesByCondition(ctx context.Context, in *SearchDevicesRequest, opts ...grpc.CallOption) (*GetDevicesInfoListResponse, error)
 	// 根据 SN、deviceId 修改设备别名
 	UpdateDeviceAlias(ctx context.Context, in *UpdateDeviceAliasRequest, opts ...grpc.CallOption) (*UpdateDeviceAliasResponse, error)
-	// 按 updateType 更新设备。owner 更新所有者，bindStatus 更新绑定状态。
+	// 按 updateType 更新设备。OWNER_AND_BIND_STATUS 同时更新所有者和绑定状态。
 	UpdateDevice(ctx context.Context, in *UpdateDeviceRequest, opts ...grpc.CallOption) (*UpdateDeviceResponse, error)
 }
 
@@ -97,7 +97,7 @@ type DeviceServiceServer interface {
 	SearchDevicesByCondition(context.Context, *SearchDevicesRequest) (*GetDevicesInfoListResponse, error)
 	// 根据 SN、deviceId 修改设备别名
 	UpdateDeviceAlias(context.Context, *UpdateDeviceAliasRequest) (*UpdateDeviceAliasResponse, error)
-	// 按 updateType 更新设备。owner 更新所有者，bindStatus 更新绑定状态。
+	// 按 updateType 更新设备。OWNER_AND_BIND_STATUS 同时更新所有者和绑定状态。
 	UpdateDevice(context.Context, *UpdateDeviceRequest) (*UpdateDeviceResponse, error)
 	mustEmbedUnimplementedDeviceServiceServer()
 }

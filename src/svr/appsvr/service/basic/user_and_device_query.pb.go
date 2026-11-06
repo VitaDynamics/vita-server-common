@@ -21,14 +21,67 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// UserBasicQueryType 批量查询用户基础信息时使用的条件类型。
+// DeviceBindStatus 设备绑定状态。与云平台 UpdateDevice 使用同一套取值。
+// App 库 bind_status 为 tinyint：0 已绑定、1 未绑定，服务端映射到本枚举，不原样透传。
+type DeviceBindStatus int32
+
+const (
+	DeviceBindStatus_DEVICE_BIND_STATUS_UNSPECIFIED DeviceBindStatus = 0
+	DeviceBindStatus_DEVICE_BIND_STATUS_BOUND       DeviceBindStatus = 1 // 已绑定
+	DeviceBindStatus_DEVICE_BIND_STATUS_UNBOUND     DeviceBindStatus = 2 // 未绑定
+)
+
+// Enum value maps for DeviceBindStatus.
+var (
+	DeviceBindStatus_name = map[int32]string{
+		0: "DEVICE_BIND_STATUS_UNSPECIFIED",
+		1: "DEVICE_BIND_STATUS_BOUND",
+		2: "DEVICE_BIND_STATUS_UNBOUND",
+	}
+	DeviceBindStatus_value = map[string]int32{
+		"DEVICE_BIND_STATUS_UNSPECIFIED": 0,
+		"DEVICE_BIND_STATUS_BOUND":       1,
+		"DEVICE_BIND_STATUS_UNBOUND":     2,
+	}
+)
+
+func (x DeviceBindStatus) Enum() *DeviceBindStatus {
+	p := new(DeviceBindStatus)
+	*p = x
+	return p
+}
+
+func (x DeviceBindStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DeviceBindStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_user_and_device_query_proto_enumTypes[0].Descriptor()
+}
+
+func (DeviceBindStatus) Type() protoreflect.EnumType {
+	return &file_user_and_device_query_proto_enumTypes[0]
+}
+
+func (x DeviceBindStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DeviceBindStatus.Descriptor instead.
+func (DeviceBindStatus) EnumDescriptor() ([]byte, []int) {
+	return file_user_and_device_query_proto_rawDescGZIP(), []int{0}
+}
+
+// UserBasicQueryType 查询用户基础信息时使用的条件类型。
+// 单条与批量接口都只读取与 type 对应的字段，其余字段忽略。
 type UserBasicQueryType int32
 
 const (
 	UserBasicQueryType_USER_BASIC_QUERY_TYPE_UNSPECIFIED UserBasicQueryType = 0
 	UserBasicQueryType_USER_BASIC_QUERY_TYPE_PHONE       UserBasicQueryType = 1
 	UserBasicQueryType_USER_BASIC_QUERY_TYPE_USER_ID     UserBasicQueryType = 2
-	UserBasicQueryType_USER_BASIC_QUERY_TYPE_DEVICE_SN   UserBasicQueryType = 3
+	// 按设备 SN 查当前绑定用户。一台设备有多条当前绑定记录时，取绑定时间最新的用户；绑定时间相同则取记录 id 更大的一条。
+	UserBasicQueryType_USER_BASIC_QUERY_TYPE_DEVICE_SN UserBasicQueryType = 3
 )
 
 // Enum value maps for UserBasicQueryType.
@@ -58,11 +111,11 @@ func (x UserBasicQueryType) String() string {
 }
 
 func (UserBasicQueryType) Descriptor() protoreflect.EnumDescriptor {
-	return file_user_and_device_query_proto_enumTypes[0].Descriptor()
+	return file_user_and_device_query_proto_enumTypes[1].Descriptor()
 }
 
 func (UserBasicQueryType) Type() protoreflect.EnumType {
-	return &file_user_and_device_query_proto_enumTypes[0]
+	return &file_user_and_device_query_proto_enumTypes[1]
 }
 
 func (x UserBasicQueryType) Number() protoreflect.EnumNumber {
@@ -71,7 +124,7 @@ func (x UserBasicQueryType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use UserBasicQueryType.Descriptor instead.
 func (UserBasicQueryType) EnumDescriptor() ([]byte, []int) {
-	return file_user_and_device_query_proto_rawDescGZIP(), []int{0}
+	return file_user_and_device_query_proto_rawDescGZIP(), []int{1}
 }
 
 type QueryDeviceBindInfoRequest struct {
@@ -217,7 +270,7 @@ type DeviceBindInfo struct {
 	// 绑定角色。
 	Role int32 `protobuf:"varint,7,opt,name=role,proto3" json:"role,omitempty"`
 	// 绑定状态。
-	BindStatus int32 `protobuf:"varint,8,opt,name=bindStatus,proto3" json:"bindStatus,omitempty"`
+	BindStatus DeviceBindStatus `protobuf:"varint,8,opt,name=bindStatus,proto3,enum=basicquery.DeviceBindStatus" json:"bindStatus,omitempty"`
 	// 绑定时间戳，毫秒。
 	BindTime int64 `protobuf:"varint,9,opt,name=bindTime,proto3" json:"bindTime,omitempty"`
 	// 解绑时间戳，毫秒。
@@ -305,11 +358,11 @@ func (x *DeviceBindInfo) GetRole() int32 {
 	return 0
 }
 
-func (x *DeviceBindInfo) GetBindStatus() int32 {
+func (x *DeviceBindInfo) GetBindStatus() DeviceBindStatus {
 	if x != nil {
 		return x.BindStatus
 	}
-	return 0
+	return DeviceBindStatus_DEVICE_BIND_STATUS_UNSPECIFIED
 }
 
 func (x *DeviceBindInfo) GetBindTime() int64 {
@@ -328,12 +381,14 @@ func (x *DeviceBindInfo) GetUnbindTime() int64 {
 
 type QueryUserBasicInfoRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 用户手机号。
+	// 用户手机号。type 为 PHONE 时填写。
 	Phone string `protobuf:"bytes,1,opt,name=phone,proto3" json:"phone,omitempty"`
-	// 用户user_id
+	// 用户 user_id。type 为 USER_ID 时填写。
 	UserId string `protobuf:"bytes,2,opt,name=userId,proto3" json:"userId,omitempty"`
-	// 设备sn
-	DeviceSn      string `protobuf:"bytes,3,opt,name=deviceSn,proto3" json:"deviceSn,omitempty"`
+	// 设备 SN。type 为 DEVICE_SN 时按当前绑定用户查询。
+	DeviceSn string `protobuf:"bytes,3,opt,name=deviceSn,proto3" json:"deviceSn,omitempty"`
+	// 查询类型。决定本次读取哪一个字段，其余字段忽略。未设置时请求失败。
+	Type          UserBasicQueryType `protobuf:"varint,4,opt,name=type,proto3,enum=basicquery.UserBasicQueryType" json:"type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -387,6 +442,13 @@ func (x *QueryUserBasicInfoRequest) GetDeviceSn() string {
 		return x.DeviceSn
 	}
 	return ""
+}
+
+func (x *QueryUserBasicInfoRequest) GetType() UserBasicQueryType {
+	if x != nil {
+		return x.Type
+	}
+	return UserBasicQueryType_USER_BASIC_QUERY_TYPE_UNSPECIFIED
 }
 
 type QueryUserBasicInfoResponse struct {
@@ -530,8 +592,9 @@ type BatchQueryUserBasicInfoResponse struct {
 	Status int32 `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
 	// 结果说明。
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	// 命中的用户基础信息。未查到的条件不返回，同一用户只出现一次。
-	Data          []*UserBasicInfo `protobuf:"bytes,3,rep,name=data,proto3" json:"data,omitempty"`
+	// 与去重后的查询条件一一对应，顺序与请求中首次出现的顺序一致。
+	// 未命中的条件也会返回，此时 user 不设置。同一用户可因多个条件出现多次。
+	Data          []*BatchQueryUserBasicInfoItem `protobuf:"bytes,3,rep,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -580,9 +643,63 @@ func (x *BatchQueryUserBasicInfoResponse) GetMessage() string {
 	return ""
 }
 
-func (x *BatchQueryUserBasicInfoResponse) GetData() []*UserBasicInfo {
+func (x *BatchQueryUserBasicInfoResponse) GetData() []*BatchQueryUserBasicInfoItem {
 	if x != nil {
 		return x.Data
+	}
+	return nil
+}
+
+type BatchQueryUserBasicInfoItem struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 查询条件原值，对应请求中的 phone、userId 或 deviceSn。
+	QueryKey string `protobuf:"bytes,1,opt,name=queryKey,proto3" json:"queryKey,omitempty"`
+	// 命中的用户基础信息。未查到时不设置。
+	User          *UserBasicInfo `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BatchQueryUserBasicInfoItem) Reset() {
+	*x = BatchQueryUserBasicInfoItem{}
+	mi := &file_user_and_device_query_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchQueryUserBasicInfoItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchQueryUserBasicInfoItem) ProtoMessage() {}
+
+func (x *BatchQueryUserBasicInfoItem) ProtoReflect() protoreflect.Message {
+	mi := &file_user_and_device_query_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchQueryUserBasicInfoItem.ProtoReflect.Descriptor instead.
+func (*BatchQueryUserBasicInfoItem) Descriptor() ([]byte, []int) {
+	return file_user_and_device_query_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *BatchQueryUserBasicInfoItem) GetQueryKey() string {
+	if x != nil {
+		return x.QueryKey
+	}
+	return ""
+}
+
+func (x *BatchQueryUserBasicInfoItem) GetUser() *UserBasicInfo {
+	if x != nil {
+		return x.User
 	}
 	return nil
 }
@@ -619,7 +736,7 @@ type UserBasicInfo struct {
 
 func (x *UserBasicInfo) Reset() {
 	*x = UserBasicInfo{}
-	mi := &file_user_and_device_query_proto_msgTypes[7]
+	mi := &file_user_and_device_query_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -631,7 +748,7 @@ func (x *UserBasicInfo) String() string {
 func (*UserBasicInfo) ProtoMessage() {}
 
 func (x *UserBasicInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_user_and_device_query_proto_msgTypes[7]
+	mi := &file_user_and_device_query_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -644,7 +761,7 @@ func (x *UserBasicInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserBasicInfo.ProtoReflect.Descriptor instead.
 func (*UserBasicInfo) Descriptor() ([]byte, []int) {
-	return file_user_and_device_query_proto_rawDescGZIP(), []int{7}
+	return file_user_and_device_query_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UserBasicInfo) GetId() uint64 {
@@ -743,7 +860,7 @@ type QueryDeviceGrowthSummaryRequest struct {
 
 func (x *QueryDeviceGrowthSummaryRequest) Reset() {
 	*x = QueryDeviceGrowthSummaryRequest{}
-	mi := &file_user_and_device_query_proto_msgTypes[8]
+	mi := &file_user_and_device_query_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -755,7 +872,7 @@ func (x *QueryDeviceGrowthSummaryRequest) String() string {
 func (*QueryDeviceGrowthSummaryRequest) ProtoMessage() {}
 
 func (x *QueryDeviceGrowthSummaryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_user_and_device_query_proto_msgTypes[8]
+	mi := &file_user_and_device_query_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -768,7 +885,7 @@ func (x *QueryDeviceGrowthSummaryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryDeviceGrowthSummaryRequest.ProtoReflect.Descriptor instead.
 func (*QueryDeviceGrowthSummaryRequest) Descriptor() ([]byte, []int) {
-	return file_user_and_device_query_proto_rawDescGZIP(), []int{8}
+	return file_user_and_device_query_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *QueryDeviceGrowthSummaryRequest) GetPhone() string {
@@ -799,7 +916,7 @@ type QueryDeviceGrowthSummaryResponse struct {
 
 func (x *QueryDeviceGrowthSummaryResponse) Reset() {
 	*x = QueryDeviceGrowthSummaryResponse{}
-	mi := &file_user_and_device_query_proto_msgTypes[9]
+	mi := &file_user_and_device_query_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -811,7 +928,7 @@ func (x *QueryDeviceGrowthSummaryResponse) String() string {
 func (*QueryDeviceGrowthSummaryResponse) ProtoMessage() {}
 
 func (x *QueryDeviceGrowthSummaryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_user_and_device_query_proto_msgTypes[9]
+	mi := &file_user_and_device_query_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -824,7 +941,7 @@ func (x *QueryDeviceGrowthSummaryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryDeviceGrowthSummaryResponse.ProtoReflect.Descriptor instead.
 func (*QueryDeviceGrowthSummaryResponse) Descriptor() ([]byte, []int) {
-	return file_user_and_device_query_proto_rawDescGZIP(), []int{9}
+	return file_user_and_device_query_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *QueryDeviceGrowthSummaryResponse) GetStatus() int32 {
@@ -860,7 +977,7 @@ type DeviceGrowthSummary struct {
 
 func (x *DeviceGrowthSummary) Reset() {
 	*x = DeviceGrowthSummary{}
-	mi := &file_user_and_device_query_proto_msgTypes[10]
+	mi := &file_user_and_device_query_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -872,7 +989,7 @@ func (x *DeviceGrowthSummary) String() string {
 func (*DeviceGrowthSummary) ProtoMessage() {}
 
 func (x *DeviceGrowthSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_user_and_device_query_proto_msgTypes[10]
+	mi := &file_user_and_device_query_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -885,7 +1002,7 @@ func (x *DeviceGrowthSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceGrowthSummary.ProtoReflect.Descriptor instead.
 func (*DeviceGrowthSummary) Descriptor() ([]byte, []int) {
-	return file_user_and_device_query_proto_rawDescGZIP(), []int{10}
+	return file_user_and_device_query_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DeviceGrowthSummary) GetSn() string {
@@ -920,7 +1037,7 @@ type DeviceGrowthSummaryItem struct {
 
 func (x *DeviceGrowthSummaryItem) Reset() {
 	*x = DeviceGrowthSummaryItem{}
-	mi := &file_user_and_device_query_proto_msgTypes[11]
+	mi := &file_user_and_device_query_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -932,7 +1049,7 @@ func (x *DeviceGrowthSummaryItem) String() string {
 func (*DeviceGrowthSummaryItem) ProtoMessage() {}
 
 func (x *DeviceGrowthSummaryItem) ProtoReflect() protoreflect.Message {
-	mi := &file_user_and_device_query_proto_msgTypes[11]
+	mi := &file_user_and_device_query_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -945,7 +1062,7 @@ func (x *DeviceGrowthSummaryItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceGrowthSummaryItem.ProtoReflect.Descriptor instead.
 func (*DeviceGrowthSummaryItem) Descriptor() ([]byte, []int) {
-	return file_user_and_device_query_proto_rawDescGZIP(), []int{11}
+	return file_user_and_device_query_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DeviceGrowthSummaryItem) GetName() string {
@@ -996,7 +1113,7 @@ const file_user_and_device_query_proto_rawDesc = "" +
 	"\x1bQueryDeviceBindInfoResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\x05R\x06status\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12.\n" +
-	"\x04data\x18\x03 \x01(\v2\x1a.basicquery.DeviceBindInfoR\x04data\"\x98\x02\n" +
+	"\x04data\x18\x03 \x01(\v2\x1a.basicquery.DeviceBindInfoR\x04data\"\xb6\x02\n" +
 	"\x0eDeviceBindInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x16\n" +
 	"\x06userId\x18\x02 \x01(\tR\x06userId\x12\x14\n" +
@@ -1004,19 +1121,20 @@ const file_user_and_device_query_proto_rawDesc = "" +
 	"\bdeviceSn\x18\x04 \x01(\tR\bdeviceSn\x12\x1a\n" +
 	"\bdeviceId\x18\x05 \x01(\tR\bdeviceId\x12 \n" +
 	"\vdeviceAlias\x18\x06 \x01(\tR\vdeviceAlias\x12\x12\n" +
-	"\x04role\x18\a \x01(\x05R\x04role\x12\x1e\n" +
+	"\x04role\x18\a \x01(\x05R\x04role\x12<\n" +
 	"\n" +
-	"bindStatus\x18\b \x01(\x05R\n" +
+	"bindStatus\x18\b \x01(\x0e2\x1c.basicquery.DeviceBindStatusR\n" +
 	"bindStatus\x12\x1a\n" +
 	"\bbindTime\x18\t \x01(\x03R\bbindTime\x12\x1e\n" +
 	"\n" +
 	"unbindTime\x18\n" +
 	" \x01(\x03R\n" +
-	"unbindTime\"e\n" +
+	"unbindTime\"\x99\x01\n" +
 	"\x19QueryUserBasicInfoRequest\x12\x14\n" +
 	"\x05phone\x18\x01 \x01(\tR\x05phone\x12\x16\n" +
 	"\x06userId\x18\x02 \x01(\tR\x06userId\x12\x1a\n" +
-	"\bdeviceSn\x18\x03 \x01(\tR\bdeviceSn\"}\n" +
+	"\bdeviceSn\x18\x03 \x01(\tR\bdeviceSn\x122\n" +
+	"\x04type\x18\x04 \x01(\x0e2\x1e.basicquery.UserBasicQueryTypeR\x04type\"}\n" +
 	"\x1aQueryUserBasicInfoResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\x05R\x06status\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12-\n" +
@@ -1025,11 +1143,14 @@ const file_user_and_device_query_proto_rawDesc = "" +
 	"\x04type\x18\x01 \x01(\x0e2\x1e.basicquery.UserBasicQueryTypeR\x04type\x12\x16\n" +
 	"\x06phones\x18\x02 \x03(\tR\x06phones\x12\x18\n" +
 	"\auserIds\x18\x03 \x03(\tR\auserIds\x12\x1c\n" +
-	"\tdeviceSns\x18\x04 \x03(\tR\tdeviceSns\"\x82\x01\n" +
+	"\tdeviceSns\x18\x04 \x03(\tR\tdeviceSns\"\x90\x01\n" +
 	"\x1fBatchQueryUserBasicInfoResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\x05R\x06status\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12-\n" +
-	"\x04data\x18\x03 \x03(\v2\x19.basicquery.UserBasicInfoR\x04data\"\xc9\x02\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12;\n" +
+	"\x04data\x18\x03 \x03(\v2'.basicquery.BatchQueryUserBasicInfoItemR\x04data\"h\n" +
+	"\x1bBatchQueryUserBasicInfoItem\x12\x1a\n" +
+	"\bqueryKey\x18\x01 \x01(\tR\bqueryKey\x12-\n" +
+	"\x04user\x18\x02 \x01(\v2\x19.basicquery.UserBasicInfoR\x04user\"\xc9\x02\n" +
 	"\rUserBasicInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x16\n" +
 	"\x06userId\x18\x02 \x01(\tR\x06userId\x12\x14\n" +
@@ -1059,7 +1180,11 @@ const file_user_and_device_query_proto_rawDesc = "" +
 	"\vtotalNumber\x18\x02 \x01(\x01R\vtotalNumber\x12 \n" +
 	"\vtodayNumber\x18\x03 \x01(\x01R\vtodayNumber\x12\x1c\n" +
 	"\ttotalText\x18\x04 \x01(\tR\ttotalText\x12\x1c\n" +
-	"\ttodayText\x18\x05 \x01(\tR\ttodayText*\xa4\x01\n" +
+	"\ttodayText\x18\x05 \x01(\tR\ttodayText*t\n" +
+	"\x10DeviceBindStatus\x12\"\n" +
+	"\x1eDEVICE_BIND_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
+	"\x18DEVICE_BIND_STATUS_BOUND\x10\x01\x12\x1e\n" +
+	"\x1aDEVICE_BIND_STATUS_UNBOUND\x10\x02*\xa4\x01\n" +
 	"\x12UserBasicQueryType\x12%\n" +
 	"!USER_BASIC_QUERY_TYPE_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bUSER_BASIC_QUERY_TYPE_PHONE\x10\x01\x12!\n" +
@@ -1083,43 +1208,48 @@ func file_user_and_device_query_proto_rawDescGZIP() []byte {
 	return file_user_and_device_query_proto_rawDescData
 }
 
-var file_user_and_device_query_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_user_and_device_query_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_user_and_device_query_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_user_and_device_query_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_user_and_device_query_proto_goTypes = []any{
-	(UserBasicQueryType)(0),                  // 0: basicquery.UserBasicQueryType
-	(*QueryDeviceBindInfoRequest)(nil),       // 1: basicquery.QueryDeviceBindInfoRequest
-	(*QueryDeviceBindInfoResponse)(nil),      // 2: basicquery.QueryDeviceBindInfoResponse
-	(*DeviceBindInfo)(nil),                   // 3: basicquery.DeviceBindInfo
-	(*QueryUserBasicInfoRequest)(nil),        // 4: basicquery.QueryUserBasicInfoRequest
-	(*QueryUserBasicInfoResponse)(nil),       // 5: basicquery.QueryUserBasicInfoResponse
-	(*BatchQueryUserBasicInfoRequest)(nil),   // 6: basicquery.BatchQueryUserBasicInfoRequest
-	(*BatchQueryUserBasicInfoResponse)(nil),  // 7: basicquery.BatchQueryUserBasicInfoResponse
-	(*UserBasicInfo)(nil),                    // 8: basicquery.UserBasicInfo
-	(*QueryDeviceGrowthSummaryRequest)(nil),  // 9: basicquery.QueryDeviceGrowthSummaryRequest
-	(*QueryDeviceGrowthSummaryResponse)(nil), // 10: basicquery.QueryDeviceGrowthSummaryResponse
-	(*DeviceGrowthSummary)(nil),              // 11: basicquery.DeviceGrowthSummary
-	(*DeviceGrowthSummaryItem)(nil),          // 12: basicquery.DeviceGrowthSummaryItem
+	(DeviceBindStatus)(0),                    // 0: basicquery.DeviceBindStatus
+	(UserBasicQueryType)(0),                  // 1: basicquery.UserBasicQueryType
+	(*QueryDeviceBindInfoRequest)(nil),       // 2: basicquery.QueryDeviceBindInfoRequest
+	(*QueryDeviceBindInfoResponse)(nil),      // 3: basicquery.QueryDeviceBindInfoResponse
+	(*DeviceBindInfo)(nil),                   // 4: basicquery.DeviceBindInfo
+	(*QueryUserBasicInfoRequest)(nil),        // 5: basicquery.QueryUserBasicInfoRequest
+	(*QueryUserBasicInfoResponse)(nil),       // 6: basicquery.QueryUserBasicInfoResponse
+	(*BatchQueryUserBasicInfoRequest)(nil),   // 7: basicquery.BatchQueryUserBasicInfoRequest
+	(*BatchQueryUserBasicInfoResponse)(nil),  // 8: basicquery.BatchQueryUserBasicInfoResponse
+	(*BatchQueryUserBasicInfoItem)(nil),      // 9: basicquery.BatchQueryUserBasicInfoItem
+	(*UserBasicInfo)(nil),                    // 10: basicquery.UserBasicInfo
+	(*QueryDeviceGrowthSummaryRequest)(nil),  // 11: basicquery.QueryDeviceGrowthSummaryRequest
+	(*QueryDeviceGrowthSummaryResponse)(nil), // 12: basicquery.QueryDeviceGrowthSummaryResponse
+	(*DeviceGrowthSummary)(nil),              // 13: basicquery.DeviceGrowthSummary
+	(*DeviceGrowthSummaryItem)(nil),          // 14: basicquery.DeviceGrowthSummaryItem
 }
 var file_user_and_device_query_proto_depIdxs = []int32{
-	3,  // 0: basicquery.QueryDeviceBindInfoResponse.data:type_name -> basicquery.DeviceBindInfo
-	8,  // 1: basicquery.QueryUserBasicInfoResponse.data:type_name -> basicquery.UserBasicInfo
-	0,  // 2: basicquery.BatchQueryUserBasicInfoRequest.type:type_name -> basicquery.UserBasicQueryType
-	8,  // 3: basicquery.BatchQueryUserBasicInfoResponse.data:type_name -> basicquery.UserBasicInfo
-	11, // 4: basicquery.QueryDeviceGrowthSummaryResponse.data:type_name -> basicquery.DeviceGrowthSummary
-	12, // 5: basicquery.DeviceGrowthSummary.info:type_name -> basicquery.DeviceGrowthSummaryItem
-	1,  // 6: basicquery.UserAndDeviceQueryService.QueryDeviceBindInfo:input_type -> basicquery.QueryDeviceBindInfoRequest
-	4,  // 7: basicquery.UserAndDeviceQueryService.QueryUserBasicInfo:input_type -> basicquery.QueryUserBasicInfoRequest
-	6,  // 8: basicquery.UserAndDeviceQueryService.BatchQueryUserBasicInfo:input_type -> basicquery.BatchQueryUserBasicInfoRequest
-	9,  // 9: basicquery.UserAndDeviceQueryService.QueryDeviceGrowthSummary:input_type -> basicquery.QueryDeviceGrowthSummaryRequest
-	2,  // 10: basicquery.UserAndDeviceQueryService.QueryDeviceBindInfo:output_type -> basicquery.QueryDeviceBindInfoResponse
-	5,  // 11: basicquery.UserAndDeviceQueryService.QueryUserBasicInfo:output_type -> basicquery.QueryUserBasicInfoResponse
-	7,  // 12: basicquery.UserAndDeviceQueryService.BatchQueryUserBasicInfo:output_type -> basicquery.BatchQueryUserBasicInfoResponse
-	10, // 13: basicquery.UserAndDeviceQueryService.QueryDeviceGrowthSummary:output_type -> basicquery.QueryDeviceGrowthSummaryResponse
-	10, // [10:14] is the sub-list for method output_type
-	6,  // [6:10] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	4,  // 0: basicquery.QueryDeviceBindInfoResponse.data:type_name -> basicquery.DeviceBindInfo
+	0,  // 1: basicquery.DeviceBindInfo.bindStatus:type_name -> basicquery.DeviceBindStatus
+	1,  // 2: basicquery.QueryUserBasicInfoRequest.type:type_name -> basicquery.UserBasicQueryType
+	10, // 3: basicquery.QueryUserBasicInfoResponse.data:type_name -> basicquery.UserBasicInfo
+	1,  // 4: basicquery.BatchQueryUserBasicInfoRequest.type:type_name -> basicquery.UserBasicQueryType
+	9,  // 5: basicquery.BatchQueryUserBasicInfoResponse.data:type_name -> basicquery.BatchQueryUserBasicInfoItem
+	10, // 6: basicquery.BatchQueryUserBasicInfoItem.user:type_name -> basicquery.UserBasicInfo
+	13, // 7: basicquery.QueryDeviceGrowthSummaryResponse.data:type_name -> basicquery.DeviceGrowthSummary
+	14, // 8: basicquery.DeviceGrowthSummary.info:type_name -> basicquery.DeviceGrowthSummaryItem
+	2,  // 9: basicquery.UserAndDeviceQueryService.QueryDeviceBindInfo:input_type -> basicquery.QueryDeviceBindInfoRequest
+	5,  // 10: basicquery.UserAndDeviceQueryService.QueryUserBasicInfo:input_type -> basicquery.QueryUserBasicInfoRequest
+	7,  // 11: basicquery.UserAndDeviceQueryService.BatchQueryUserBasicInfo:input_type -> basicquery.BatchQueryUserBasicInfoRequest
+	11, // 12: basicquery.UserAndDeviceQueryService.QueryDeviceGrowthSummary:input_type -> basicquery.QueryDeviceGrowthSummaryRequest
+	3,  // 13: basicquery.UserAndDeviceQueryService.QueryDeviceBindInfo:output_type -> basicquery.QueryDeviceBindInfoResponse
+	6,  // 14: basicquery.UserAndDeviceQueryService.QueryUserBasicInfo:output_type -> basicquery.QueryUserBasicInfoResponse
+	8,  // 15: basicquery.UserAndDeviceQueryService.BatchQueryUserBasicInfo:output_type -> basicquery.BatchQueryUserBasicInfoResponse
+	12, // 16: basicquery.UserAndDeviceQueryService.QueryDeviceGrowthSummary:output_type -> basicquery.QueryDeviceGrowthSummaryResponse
+	13, // [13:17] is the sub-list for method output_type
+	9,  // [9:13] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_user_and_device_query_proto_init() }
@@ -1132,8 +1262,8 @@ func file_user_and_device_query_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_and_device_query_proto_rawDesc), len(file_user_and_device_query_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   12,
+			NumEnums:      2,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

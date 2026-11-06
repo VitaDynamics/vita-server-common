@@ -8,10 +8,10 @@ service UserAndDeviceQueryService {
   // 按设备 ID 或 SN 与手机号查询设备绑定信息及设备别名。
   rpc QueryDeviceBindInfo(QueryDeviceBindInfoRequest) returns (QueryDeviceBindInfoResponse);
 
-  // 按手机号查询用户基础信息。
+  // 按手机号、userId 或设备 SN 查询用户基础信息。由 type 指定条件。
   rpc QueryUserBasicInfo(QueryUserBasicInfoRequest) returns (QueryUserBasicInfoResponse);
 
-  // 按手机号、userId 或设备 SN 批量查询用户基础信息。
+  // 按手机号、userId 或设备 SN 批量查询用户基础信息。结果与查询条件一一对应。
   rpc BatchQueryUserBasicInfo(BatchQueryUserBasicInfoRequest) returns (BatchQueryUserBasicInfoResponse);
 
   // 按手机号与设备 SN 查询设备成长监控数据（对接 GetGrowthSummary）。
@@ -40,6 +40,14 @@ message QueryDeviceBindInfoResponse {
   DeviceBindInfo data = 3;
 }
 
+// DeviceBindStatus 设备绑定状态。与云平台 UpdateDevice 使用同一套取值。
+// App 库 bind_status 为 tinyint：0 已绑定、1 未绑定，服务端映射到本枚举，不原样透传。
+enum DeviceBindStatus {
+  DEVICE_BIND_STATUS_UNSPECIFIED = 0;
+  DEVICE_BIND_STATUS_BOUND = 1;   // 已绑定
+  DEVICE_BIND_STATUS_UNBOUND = 2; // 未绑定
+}
+
 message DeviceBindInfo {
   // 绑定记录 ID。
   uint64 id = 1;
@@ -63,7 +71,7 @@ message DeviceBindInfo {
   int32 role = 7;
 
   // 绑定状态。
-  int32 bindStatus = 8;
+  DeviceBindStatus bindStatus = 8;
 
   // 绑定时间戳，毫秒。
   int64 bindTime = 9;
@@ -73,12 +81,17 @@ message DeviceBindInfo {
 }
 
 message QueryUserBasicInfoRequest {
-  // 用户手机号。
+  // 用户手机号。type 为 PHONE 时填写。
   string phone = 1;
-  // 用户user_id
+
+  // 用户 user_id。type 为 USER_ID 时填写。
   string userId = 2;
-  // 设备sn
+
+  // 设备 SN。type 为 DEVICE_SN 时按当前绑定用户查询。
   string deviceSn = 3;
+
+  // 查询类型。决定本次读取哪一个字段，其余字段忽略。未设置时请求失败。
+  UserBasicQueryType type = 4;
 }
 
 message QueryUserBasicInfoResponse {
@@ -92,11 +105,13 @@ message QueryUserBasicInfoResponse {
   UserBasicInfo data = 3;
 }
 
-// UserBasicQueryType 批量查询用户基础信息时使用的条件类型。
+// UserBasicQueryType 查询用户基础信息时使用的条件类型。
+// 单条与批量接口都只读取与 type 对应的字段，其余字段忽略。
 enum UserBasicQueryType {
   USER_BASIC_QUERY_TYPE_UNSPECIFIED = 0;
   USER_BASIC_QUERY_TYPE_PHONE = 1;
   USER_BASIC_QUERY_TYPE_USER_ID = 2;
+  // 按设备 SN 查当前绑定用户。一台设备有多条当前绑定记录时，取绑定时间最新的用户；绑定时间相同则取记录 id 更大的一条。
   USER_BASIC_QUERY_TYPE_DEVICE_SN = 3;
 }
 
@@ -121,8 +136,17 @@ message BatchQueryUserBasicInfoResponse {
   // 结果说明。
   string message = 2;
 
-  // 命中的用户基础信息。未查到的条件不返回，同一用户只出现一次。
-  repeated UserBasicInfo data = 3;
+  // 与去重后的查询条件一一对应，顺序与请求中首次出现的顺序一致。
+  // 未命中的条件也会返回，此时 user 不设置。同一用户可因多个条件出现多次。
+  repeated BatchQueryUserBasicInfoItem data = 3;
+}
+
+message BatchQueryUserBasicInfoItem {
+  // 查询条件原值，对应请求中的 phone、userId 或 deviceSn。
+  string queryKey = 1;
+
+  // 命中的用户基础信息。未查到时不设置。
+  UserBasicInfo user = 2;
 }
 
 message UserBasicInfo {

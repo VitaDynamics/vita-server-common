@@ -31,9 +31,9 @@ const (
 type UserAndDeviceQueryServiceClient interface {
 	// 按设备 ID 或 SN 与手机号查询设备绑定信息及设备别名。
 	QueryDeviceBindInfo(ctx context.Context, in *QueryDeviceBindInfoRequest, opts ...grpc.CallOption) (*QueryDeviceBindInfoResponse, error)
-	// 按手机号查询用户基础信息。
+	// 按手机号、userId 或设备 SN 查询用户基础信息。由 type 指定条件。
 	QueryUserBasicInfo(ctx context.Context, in *QueryUserBasicInfoRequest, opts ...grpc.CallOption) (*QueryUserBasicInfoResponse, error)
-	// 按手机号、userId 或设备 SN 批量查询用户基础信息。
+	// 按手机号、userId 或设备 SN 批量查询用户基础信息。结果与查询条件一一对应。
 	BatchQueryUserBasicInfo(ctx context.Context, in *BatchQueryUserBasicInfoRequest, opts ...grpc.CallOption) (*BatchQueryUserBasicInfoResponse, error)
 	// 按手机号与设备 SN 查询设备成长监控数据（对接 GetGrowthSummary）。
 	QueryDeviceGrowthSummary(ctx context.Context, in *QueryDeviceGrowthSummaryRequest, opts ...grpc.CallOption) (*QueryDeviceGrowthSummaryResponse, error)
@@ -93,9 +93,9 @@ func (c *userAndDeviceQueryServiceClient) QueryDeviceGrowthSummary(ctx context.C
 type UserAndDeviceQueryServiceServer interface {
 	// 按设备 ID 或 SN 与手机号查询设备绑定信息及设备别名。
 	QueryDeviceBindInfo(context.Context, *QueryDeviceBindInfoRequest) (*QueryDeviceBindInfoResponse, error)
-	// 按手机号查询用户基础信息。
+	// 按手机号、userId 或设备 SN 查询用户基础信息。由 type 指定条件。
 	QueryUserBasicInfo(context.Context, *QueryUserBasicInfoRequest) (*QueryUserBasicInfoResponse, error)
-	// 按手机号、userId 或设备 SN 批量查询用户基础信息。
+	// 按手机号、userId 或设备 SN 批量查询用户基础信息。结果与查询条件一一对应。
 	BatchQueryUserBasicInfo(context.Context, *BatchQueryUserBasicInfoRequest) (*BatchQueryUserBasicInfoResponse, error)
 	// 按手机号与设备 SN 查询设备成长监控数据（对接 GetGrowthSummary）。
 	QueryDeviceGrowthSummary(context.Context, *QueryDeviceGrowthSummaryRequest) (*QueryDeviceGrowthSummaryResponse, error)
