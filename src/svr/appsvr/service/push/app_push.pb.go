@@ -146,7 +146,9 @@ type NotifyPushRequest struct {
 	NotifyType string `protobuf:"bytes,4,opt,name=notifyType,proto3" json:"notifyType,omitempty"`
 	// 调用方服务名，用于统计与排查。
 	Source string `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
-	// 幂等键。相同 requestId 在服务端保留期内只推送一次，为空时不做幂等。
+	// 幂等键。为空时不做幂等。
+	// 非空时服务端用 Redis SETNX 去重，相同 requestId 在 24 小时内只推送一次。
+	// 推送失败会释放该键。Redis 不可用时无法去重，本次请求仍会推送。
 	RequestId     string `protobuf:"bytes,6,opt,name=requestId,proto3" json:"requestId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
