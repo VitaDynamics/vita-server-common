@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package apppush;
+
+option go_package = "service//push;apppush";
+
+service AppPushService {
+  // 通知 App 服务向指定用户或设备的手机发送推送。
+  // 调用方只指定推送目标与通知类型，推送标题、内容与推送方式由 App 服务按通知类型决定。
+  rpc NotifyPush(NotifyPushRequest) returns (NotifyPushResponse);
+}
+
+// PushTargetType 推送目标类型。App 服务按类型把目标解析为用户已登录的手机后下发。
+enum PushTargetType {
+  PUSH_TARGET_TYPE_UNSPECIFIED = 0;
+  // 按用户 user_id 推送到该用户已登录的手机。
+  PUSH_TARGET_TYPE_USER_ID = 1;
+  // 按用户手机号推送到该用户已登录的手机。
+  PUSH_TARGET_TYPE_PHONE = 2;
+  // 按设备 SN 推送到该设备当前绑定的所有用户。
+  PUSH_TARGET_TYPE_DEVICE_SN = 3;
+  // 按产品 ID 推送到该产品下所有设备当前绑定的用户。
+  PUSH_TARGET_TYPE_PRODUCT_ID = 4;
+}
+
+// PushPlatform 手机平台。
+enum PushPlatform {
+  // 不限平台，Android 与 iOS 都推送。
+  PUSH_PLATFORM_ALL = 0;
+  PUSH_PLATFORM_ANDROID = 1;
+  PUSH_PLATFORM_IOS = 2;
+}
+
+message NotifyPushRequest {
+  // 目标类型。未设置时请求失败。
+  PushTargetType targetType = 1;
+
+  // 目标值列表，含义由 targetType 决定（userId / 手机号 / 设备 SN / 产品 ID）。
+  // 服务端去重，最多 1000 个。
+  repeated string targetValues = 2;
+
+  // 平台过滤。只推送到指定平台的手机。
+  PushPlatform platform = 3;
+
+  // 通知类型，由 App 服务映射为具体的推送内容与推送方式，如 "device_alarm"、"firmware_upgrade"。
+  // 未识别的类型请求失败。
+  string notifyType = 4;
+
+  // 调用方服务名，用于统计与排查。
+  string source = 5;
+
+  // 幂等键。为空时不做幂等。
+  // 非空时服务端用 Redis SETNX 去重，相同 requestId 在 24 小时内只推送一次。
+  // 推送失败会释放该键。Redis 不可用时无法去重，本次请求仍会推送。
+  string requestId = 6;
+}
+
+message NotifyPushResponse {
+  // 状态码：0 成功，其他失败。
+  int32 status = 1;
+
+  // 结果说明。
+  string message = 2;
+
+  // 推送结果。
+  NotifyPushResult data = 3;
+}
+
+message NotifyPushResult {
+  // 服务端为本次推送生成的推送 ID，用于排查。
+  string pushId = 1;
+
+  // 目标解析得到的用户数。
+  int32 userCount = 2;
+
+  // 实际下发的 Android 手机数。
+  int32 androidDeviceCount = 3;
+
+  // 实际下发的 iOS 手机数。
+  int32 iosDeviceCount = 4;
+
+  // 未解析到可推送手机的目标值（如用户未登录、设备未绑定）。
+  repeated string unreachableValues = 5;
+}
